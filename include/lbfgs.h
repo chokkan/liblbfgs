@@ -419,7 +419,7 @@ void lbfgs_free(lbfgsfloatval_t *x);
 
 
 /**
-@mainpage A library of Limited-memory Broyden-Fletcher-Goldfarb-Shanno (L-BFGS)
+@mainpage libLBFGS: a library of Limited-memory Broyden-Fletcher-Goldfarb-Shanno (L-BFGS)
 
 @section intro Introduction
 
@@ -445,7 +445,7 @@ drastically for large-scaled problems.
 
 Among the various ports of L-BFGS, this library provides several features:
 - <b>Optimization with L1-norm (Orthant-Wise Limited-memory Quasi-Newton
-  (OW-LQN) method)</b>:
+  (OWL-QN) method)</b>:
   In addition to standard minimization problems, the library can minimize
   a function F(x) combined with L1-norm |x| of the variables,
   {F(x) + C |x|}, where C is a constant scalar parameter. This feature is
@@ -483,7 +483,7 @@ This library is used by:
 
 @section download Download
 
-- <a href="http://www.chokkan.org/software/dist/libLBFGS-1.4.tar.gz">Source code</a>
+- <a href="http://www.chokkan.org/software/dist/liblbfgs-1.4.tar.gz">Source code</a>
 
 libLBFGS is distributed under the term of the
 <a href="http://opensource.org/licenses/mit-license.php">MIT license</a>.
@@ -495,8 +495,8 @@ libLBFGS is distributed under the term of the
       method (::LBFGS_LINESEARCH_MORETHUENTE) or backtracking algorithm
       (::LBFGS_LINESEARCH_BACKTRACKING).
     - Fixed a bug: the previous version did not compute psuedo-gradients
-      properly in the line search routines for OW-LQN. This bug might quit
-      an iteration process too early when the OW-LQN routine was activated
+      properly in the line search routines for OWL-QN. This bug might quit
+      an iteration process too early when the OWL-QN routine was activated
       (0 < ::lbfgs_parameter_t::orthantwise_c).
     - Configure script for POSIX environments.
     - SSE/SSE2 optimizations with GCC.
@@ -549,7 +549,7 @@ The line search algorithms used in this implementation are described in:
       <i>ACM Transactions on Mathematical Software (TOMS)</i>, Vol. 20, No. 3,
       pp. 286-307, 1994.
 
-This library also implements Orthant-Wise Limited-memory Quasi-Newton (OW-LQN)
+This library also implements Orthant-Wise Limited-memory Quasi-Newton (OWL-QN)
 method presented in:
     - Galen Andrew and Jianfeng Gao.
       Scalable training of L1-regularized log-linear models.
