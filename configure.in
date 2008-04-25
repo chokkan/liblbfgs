@@ -1,4 +1,4 @@
-dnl $Id:$
+dnl $Id$
 dnl
 dnl
 dnl Exported and configured variables:
@@ -44,7 +44,7 @@ dnl ------------------------------------------------------------------
 dnl Checks for header files.
 dnl ------------------------------------------------------------------
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h limits.h malloc.h strings.h unistd.h stdint.h)
+AC_CHECK_HEADERS(xmmintrin.h emmintrin.h)
 
 
 dnl ------------------------------------------------------------------
@@ -71,6 +71,19 @@ AC_ARG_ENABLE(
 
 if test "x$enable_profile" = "xyes"; then
    CFLAGS="-DPROFILE -pg ${CFLAGS}"
+fi
+
+
+dnl ------------------------------------------------------------------
+dnl Checks for SSE build
+dnl ------------------------------------------------------------------
+AC_ARG_ENABLE(
+  sse,
+  [AS_HELP_STRING([--enable-sse],[Enable SSE optimized routines])]
+)
+
+if test "x$enable_sse" = "xyes"; then
+   CFLAGS="-msse2 -DUSE_SSE ${CFLAGS}"
 fi
 
 

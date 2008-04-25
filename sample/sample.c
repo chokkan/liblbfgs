@@ -42,12 +42,18 @@ static int progress(
     return 0;
 }
 
-#define N   8
+#define N   100
 
 int main(int argc, char *argv)
 {
     int i, ret = 0;
-    lbfgsfloatval_t x[N], fx;
+    lbfgsfloatval_t fx;
+    lbfgsfloatval_t *x = lbfgs_malloc(N);
+
+    if (x == NULL) {
+        printf("ERROR: Failed to allocate a memory block for variables.\n");
+        return 1;
+    }
 
     /* Initialize the variables. */
     for (i = 0;i < N;i += 2) {
@@ -65,5 +71,6 @@ int main(int argc, char *argv)
     printf("L-BFGS optimization terminated with status code = %d\n", ret);
     printf("  fx = %f, x[0] = %f, x[1] = %f\n", fx, x[0], x[1]);
 
+    lbfgs_free(x);
     return 0;
 }

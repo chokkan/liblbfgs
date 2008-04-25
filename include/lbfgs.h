@@ -33,6 +33,9 @@
 extern "C" {
 #endif/*__cplusplus*/
 
+#define USE_SSE 1
+#define __SSE2__ 1
+
 /*
  * The default precision of floating point values is 64bit (double).
  */
@@ -87,6 +90,8 @@ enum {
     LBFGSERR_INVALID_N,
     /** Invalid number of variables (for SSE) specified. */
     LBFGSERR_INVALID_N_SSE,
+    /** The array x must be aligned to 16 (for SSE). */
+    LBFGSERR_INVALID_X_SSE,
     /** Invalid parameter lbfgs_parameter_t::linesearch specified. */
     LBFGSERR_INVALID_LINESEARCH,
     /** Invalid parameter lbfgs_parameter_t::max_step specified. */
@@ -336,7 +341,9 @@ In this formula, ||.|| denotes the Euclidean norm.
  *  @param  n           The number of variables.
  *  @param  x           The array of variables. A client program can set
  *                      default values for the optimization and receive the
- *                      optimization result through this array.
+ *                      optimization result through this array. The memory
+ *                      block of this array must be aligned to 16 for liblbfgs
+ *                      built with SSE/SSE2 optimization routine enabled.
  *  @param  ptr_fx      The pointer to the variable that receives the final
  *                      value of the objective function for the variables.
  *                      This argument can be set to \c NULL if the final
@@ -364,7 +371,7 @@ In this formula, ||.|| denotes the Euclidean norm.
  *                      non-zero value indicates an error.
  */
 int lbfgs(
-    const int n,
+    int n,
     lbfgsfloatval_t *x,
     lbfgsfloatval_t *ptr_fx,
     lbfgs_evaluate_t proc_evaluate,
@@ -382,6 +389,26 @@ int lbfgs(
  *  @param  param       The pointer to the parameter structure.
  */
 void lbfgs_parameter_init(lbfgs_parameter_t *param);
+
+/**
+ * Allocate an array for variables.
+ *
+ *  Use this function to allocate a variable array for liblbfgs built with
+ *  or without SSE/SSE2 optimization routine enabled. When SSE/SSE2 routine in
+ *  liblbfgs is disabled, it is unnecessary to use this function; liblbfgs
+ *  accepts a variable array allocated by any 
+ *  
+ *  @param  n           The number of variables.
+ */
+lbfgsfloatval_t* lbfgs_malloc(int n);
+
+/**
+ * Free an array of variables.
+ *  
+ *  @param  x           The array of variables allocated by ::lbfgs_malloc
+ *                      function.
+ */
+void lbfgs_free(lbfgsfloatval_t *x);
 
 /** @} */
 
@@ -411,18 +438,20 @@ only if the objective function F(x) and its gradient G(x) are computable. The
 well-known Newton's method requires computation of the inverse of the hessian
 matrix of the objective function. However, the computational cost for the
 inverse hessian matrix is expensive especially when the objective function
-takes a large number of variables. The L-BFGS method iteratively find a
+takes a large number of variables. The L-BFGS method iteratively finds a
 minimizer by approximating the inverse hessian matrix by information from last
 m iterations. This innovation saves the memory storage and computational time
 drastically for large-scaled problems.
 
 Among the various ports of L-BFGS, this library provides several features:
-- <b>Optimization with L1-norm (orthant-wise L-BFGS)</b>:
+- <b>Optimization with L1-norm (Orthant-Wise Limited-memory Quasi-Newton
+  (OW-LQN) method)</b>:
   In addition to standard minimization problems, the library can minimize
   a function F(x) combined with L1-norm |x| of the variables,
   {F(x) + C |x|}, where C is a constant scalar parameter. This feature is
-  useful for estimating parameters of log-linear models (e.g., logistic
-  regression and maximum entropy) with L1-regularization.
+  useful for estimating parameters of sparse log-linear models (e.g.,
+  logistic regression and maximum entropy) with L1-regularization (or
+  Laplacian prior).
 - <b>Clean C code</b>:
   Unlike C codes generated automatically by f2c (Fortran 77 into C converter),
   this port includes changes based on my interpretations, improvements,
@@ -446,8 +475,7 @@ Among the various ports of L-BFGS, this library provides several features:
   This library includes SSE/SSE2 optimization (written in compiler intrinsics)
   for vector arithmetic operations on Intel/AMD processors. The library uses
   SSE for float values and SSE2 for double values. The SSE/SSE2 optimization
-  routine is disabled by default; compile the library with __SSE__ symbol
-  defined to activate the optimization routine.
+  routine is disabled by default.
 
 This library is used by:
 - <a href="http://www.chokkan.org/software/crfsuite/">CRFsuite: A fast implementation of Conditional Random Fields (CRFs)</a>
@@ -470,6 +498,7 @@ libLBFGS is distributed under the term of the
       psuedo-gradients properly in the line search routine. This bug might
       quit an iteration process too early when the orthant-wise L-BFGS routine
       was activated (0 < ::lbfgs_parameter_t::orthantwise_c).
+    - Added configure script.
 - Version 1.3 (2007-12-16):
     - An API change. An argument was added to lbfgs() function to receive the
       final value of the objective function. This argument can be set to

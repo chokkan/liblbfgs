@@ -31,11 +31,19 @@
 
 #if     1400 <= _MSC_VER
 #include <intrin.h>
-#endif
+#endif/*1400 <= _MSC_VER*/
+
+#if     HAVE_EMMINTRIN_H
+#include <emmintrin.h>
+#endif/*HAVE_EMMINTRIN_H*/
 
 inline static void* vecalloc(size_t size)
 {
+#ifdef	_MSC_VER
     void *memblock = _aligned_malloc(size, 16);
+#else
+    void *memblock = memalign(16, size);
+#endif
     if (memblock != NULL) {
         memset(memblock, 0, size);
     }
@@ -44,7 +52,11 @@ inline static void* vecalloc(size_t size)
 
 inline static void vecfree(void *memblock)
 {
+#ifdef	_MSC_VER
     _aligned_free(memblock);
+#else
+    free(memblock);
+#endif
 }
 
 #define fsigndiff(x, y) \
