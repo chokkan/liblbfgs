@@ -33,9 +33,6 @@
 extern "C" {
 #endif/*__cplusplus*/
 
-#define USE_SSE 1
-#define __SSE2__ 1
-
 /*
  * The default precision of floating point values is 64bit (double).
  */
@@ -57,7 +54,7 @@ typedef float lbfgsfloatval_t;
 typedef double lbfgsfloatval_t;
 
 #else
-#error "liblbfgs supports single (float; LBFGS_FLOAT = 32) or double (double; LBFGS_FLOAT=64) precision only."
+#error "libLBFGS supports single (float; LBFGS_FLOAT = 32) or double (double; LBFGS_FLOAT=64) precision only."
 
 #endif
 
@@ -341,9 +338,11 @@ In this formula, ||.|| denotes the Euclidean norm.
  *  @param  n           The number of variables.
  *  @param  x           The array of variables. A client program can set
  *                      default values for the optimization and receive the
- *                      optimization result through this array. The memory
- *                      block of this array must be aligned to 16 for liblbfgs
- *                      built with SSE/SSE2 optimization routine enabled.
+ *                      optimization result through this array. This array
+ *                      must be allocated by ::lbfgs_malloc function
+ *                      for libLBFGS built with SSE/SSE2 optimization routine
+ *                      enabled. The library built without SSE/SSE2
+ *                      optimization does not have such a requirement.
  *  @param  ptr_fx      The pointer to the variable that receives the final
  *                      value of the objective function for the variables.
  *                      This argument can be set to \c NULL if the final
@@ -393,10 +392,11 @@ void lbfgs_parameter_init(lbfgs_parameter_t *param);
 /**
  * Allocate an array for variables.
  *
- *  Use this function to allocate a variable array for liblbfgs built with
- *  or without SSE/SSE2 optimization routine enabled. When SSE/SSE2 routine in
- *  liblbfgs is disabled, it is unnecessary to use this function; liblbfgs
- *  accepts a variable array allocated by any 
+ *  This function allocates an array of variables for the convenience of
+ *  ::lbfgs function; the function has a requreiemt for a variable array
+ *  when libLBFGS is built with SSE/SSE2 optimization routines. A user does
+ *  not have to use this function for libLBFGS built without SSE/SSE2
+ *  optimization.
  *  
  *  @param  n           The number of variables.
  */
@@ -483,7 +483,7 @@ This library is used by:
 
 @section download Download
 
-- <a href="http://www.chokkan.org/software/dist/liblbfgs-1.3.tar.gz">Source code</a>
+- <a href="http://www.chokkan.org/software/dist/libLBFGS-1.4.tar.gz">Source code</a>
 
 libLBFGS is distributed under the term of the
 <a href="http://opensource.org/licenses/mit-license.php">MIT license</a>.
@@ -494,11 +494,16 @@ libLBFGS is distributed under the term of the
       ::lbfgs_parameter_t::linesearch was added to choose either MoreThuente
       method (::LBFGS_LINESEARCH_MORETHUENTE) or backtracking algorithm
       (::LBFGS_LINESEARCH_BACKTRACKING).
-    - Fixed a serious bug: the previous version did not compute
-      psuedo-gradients properly in the line search routine. This bug might
-      quit an iteration process too early when the orthant-wise L-BFGS routine
-      was activated (0 < ::lbfgs_parameter_t::orthantwise_c).
-    - Added configure script.
+    - Fixed a bug: the previous version did not compute psuedo-gradients
+      properly in the line search routines for OW-LQN. This bug might quit
+      an iteration process too early when the OW-LQN routine was activated
+      (0 < ::lbfgs_parameter_t::orthantwise_c).
+    - Configure script for POSIX environments.
+    - SSE/SSE2 optimizations with GCC.
+    - New functions ::lbfgs_malloc and ::lbfgs_free to use SSE/SSE2 routines
+      transparently. It is uncessary to use these functions for libLBFGS built
+      without SSE/SSE2 routines; you can still use any memory allocators if
+      SSE/SSE2 routines are disabled in libLBFGS.
 - Version 1.3 (2007-12-16):
     - An API change. An argument was added to lbfgs() function to receive the
       final value of the objective function. This argument can be set to

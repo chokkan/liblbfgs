@@ -169,6 +169,7 @@ static int update_trial_interval(
     int *brackt
     );
 
+#if     defined(USE_SSE) && (defined(__SSE__) || defined(__SSE2__))
 static int round_out_variables(int n)
 {
     n += 7;
@@ -176,6 +177,7 @@ static int round_out_variables(int n)
     n *= 8;
     return n;
 }
+#endif/*defined(USE_SSE)*/
 
 lbfgsfloatval_t* lbfgs_malloc(int n)
 {

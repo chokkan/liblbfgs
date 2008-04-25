@@ -1,0 +1,14 @@
+# $Id$
+
+EXTRA_DIST = \
+	sample.vcproj
+
+noinst_PROGRAMS = sample
+
+sample_SOURCES = \
+	sample.c
+
+sample_LDADD = ../lib/liblbfgs.la
+
+AM_CFLAGS = @CFLAGS@
+INCLUDES = @INCLUDES@

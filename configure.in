@@ -102,5 +102,5 @@ AC_SUBST(INCLUDES)
 dnl ------------------------------------------------------------------
 dnl Output the configure results.
 dnl ------------------------------------------------------------------
-AC_CONFIG_FILES(Makefile)
+AC_CONFIG_FILES(Makefile lib/Makefile sample/Makefile)
 AC_OUTPUT
