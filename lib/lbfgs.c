@@ -49,7 +49,7 @@ The line search algorithms used in this implementation are described in:
       <i>ACM Transactions on Mathematical Software (TOMS)</i>, Vol. 20, No. 3,
       pp. 286-307, 1994.
 
-This library also implements Orthant-Wise Limited-memory Quasi-Newton (OW-LQN)
+This library also implements Orthant-Wise Limited-memory Quasi-Newton (OWL-QN)
 method presented in:
     - Galen Andrew and Jianfeng Gao.
       Scalable training of L1-regularized log-linear models.
