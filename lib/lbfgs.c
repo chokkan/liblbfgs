@@ -327,6 +327,11 @@ int lbfgs(
     if (param->orthantwise_c == 0.) {
         vecncpy(d, g, n);
     } else {
+        /* Compute the negative of gradients. */
+        for (i = 0;i < param->orthantwise_start;++i) {
+            d[i] = -g[i];
+        }
+
         /* Compute the negative of psuedo-gradients. */
         for (i = param->orthantwise_start;i < n;++i) {
             if (x[i] < 0.) {
@@ -432,6 +437,11 @@ int lbfgs(
             /* Compute the negative of gradients. */
             vecncpy(d, g, n);
         } else {
+            /* Compute the negative of gradients. */
+            for (i = 0;i < param->orthantwise_start;++i) {
+                d[i] = -g[i];
+            }
+
             /* Compute the negative of psuedo-gradients. */
             for (i = param->orthantwise_start;i < n;++i) {
                 if (x[i] < 0.) {
@@ -544,6 +554,11 @@ static int line_search_backtracking(
 
     /* Compute the initial gradient in the search direction. */
     if (param->orthantwise_c != 0.) {
+        /* Compute the negative of gradients. */
+        for (i = 0;i < param->orthantwise_start;++i) {
+            dginit += s[i] * g[i];
+        }
+
         /* Use psuedo-gradients for orthant-wise updates. */
         for (i = param->orthantwise_start;i < n;++i) {
             /* Notice that:
@@ -663,8 +678,13 @@ static int line_search_morethuente(
 
     /* Compute the initial gradient in the search direction. */
     if (param->orthantwise_c != 0.) {
-        /* Use psuedo-gradients for orthant-wise updates. */
         dginit = 0.;
+
+        for (i = 0;i < param->orthantwise_start;++i) {
+            dginit += s[i] * g[i];
+        }
+
+        /* Use psuedo-gradients for orthant-wise updates. */
         for (i = param->orthantwise_start;i < n;++i) {
             /* Notice that:
                 (-s[i] < 0)  <==>  (g[i] < -param->orthantwise_c)
@@ -771,8 +791,12 @@ static int line_search_morethuente(
             }
             *f += norm * param->orthantwise_c;
 
-            /* Use psuedo-gradients for orthant-wise updates. */
             dg = 0.;
+            for (i = 0;i < param->orthantwise_start;++i) {
+                dg += s[i] * g[i];
+            }
+
+            /* Use psuedo-gradients for orthant-wise updates. */
             for (i = param->orthantwise_start;i < n;++i) {
                 if (x[i] < 0.) {
                     /* Differentiable. */
