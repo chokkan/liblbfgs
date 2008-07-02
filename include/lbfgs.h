@@ -105,6 +105,8 @@ enum {
     LBFGSERR_INVALID_MAXLINESEARCH,
     /** Invalid parameter lbfgs_parameter_t::orthantwise_c specified. */
     LBFGSERR_INVALID_ORTHANTWISE,
+    /** Invalid parameter lbfgs_parameter_t::orthantwise_start specified. */
+    LBFGSERR_INVALID_ORTHANTWISE_START,
     /** The line-search step went out of the interval of uncertainty. */
     LBFGSERR_OUTOFINTERVAL,
     /** A logic error occurred; alternatively, the interval of uncertainty
@@ -250,6 +252,8 @@ typedef struct {
      *  F(x) and gradients G(x) as usual. The default value is zero.
      */
     lbfgsfloatval_t orthantwise_c;
+
+    int             orthantwise_start;
 } lbfgs_parameter_t;
 
 
