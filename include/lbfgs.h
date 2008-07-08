@@ -74,6 +74,8 @@ enum {
     LBFGSFALSE = 0,
     /** True value. */
     LBFGSTRUE,
+    /** */
+    LBFGS_ALREADY_MINIMIZED,
 
     /** Unknown error. */
     LBFGSERR_UNKNOWNERROR = -1024,

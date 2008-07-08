@@ -184,7 +184,7 @@ lbfgsfloatval_t* lbfgs_malloc(int n)
 #if     defined(USE_SSE) && (defined(__SSE__) || defined(__SSE2__))
     n = round_out_variables(n);
 #endif/*defined(USE_SSE)*/
-    return vecalloc(sizeof(lbfgsfloatval_t) * n);
+    return (lbfgsfloatval_t*)vecalloc(sizeof(lbfgsfloatval_t) * n);
 }
 
 void lbfgs_free(lbfgsfloatval_t *x)
@@ -352,6 +352,15 @@ int lbfgs(
                 }
             }
         }
+    }
+
+    /*
+       Make sure that the gradients are not zero.
+     */
+    vecnorm(&gnorm, g, n);
+    if (gnorm == 0.) {
+        ret = LBFGS_ALREADY_MINIMIZED;
+        goto lbfgs_exit;
     }
 
     /* Compute the initial step:
