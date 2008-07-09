@@ -401,7 +401,7 @@ int lbfgs(
         if (xnorm < 1.0) xnorm = 1.0;
         if (gnorm / xnorm <= param->epsilon) {
             /* Convergence. */
-            ret = 0;
+            ret = LBFGS_SUCCESS;
             break;
         }
 
