@@ -1,3 +1,18 @@
+2008-07-10  Naoaki Okazaki  <okazaki at chokkan org>
+
+	* libLBFGS 1.5:
+	- Configurable starting index for L1-norm computation. A member
+	  variable lbfgs_parameter_t::orthantwise_start was added to specify
+	  the index number from which the library computes the L1 norm of the
+	  variables.
+	- Fixed a zero-division error when the initial variables have already
+	  been a minimizer (reported by Takashi Imamichi). In this case, the
+	  library returns LBFGS_ALREADY_MINIMIZED status code.
+	- Defined LBFGS_SUCCESS status code as zero; removed unused constants,
+	  LBFGSFALSE and LBFGSTRUE.
+	- Fixed a compile error in an implicit down-cast.
+
+
 2008-04-25  Naoaki Okazaki  <okazaki at chokkan org>
 
 	* libLBFGS 1.4:

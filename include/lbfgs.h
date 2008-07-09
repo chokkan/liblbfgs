@@ -511,7 +511,7 @@ libLBFGS is distributed under the term of the
 <a href="http://opensource.org/licenses/mit-license.php">MIT license</a>.
 
 @section changelog History
-- Version 1.5 (2008-07-09):
+- Version 1.5 (2008-07-10):
     - Configurable starting index for L1-norm computation. A member variable
       ::lbfgs_parameter_t::orthantwise_start was added to specify the index
       number from which the library computes the L1 norm of the variables.

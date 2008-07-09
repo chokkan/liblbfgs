@@ -24,7 +24,7 @@ http://www.chokkan.org/software/liblbfgs/
 =========================================================================
 2. How to build
 =========================================================================
-[Microsoft Visual Studio 2005]
+[Microsoft Visual Studio 2008]
 Open the solution file "lbfgs.sln" and build it.
 
 [GCC]
@@ -58,7 +58,7 @@ To package maintainers,
 
 Please do not enable SSE/SSE2 optimization routine. The library built
 with SSE/SSE2 optimization will crash without any notice when necessary
-SSE/SSE2 instructions are unavailable on computers.
+SSE/SSE2 instructions are unavailable on CPUs.
 
 
 
