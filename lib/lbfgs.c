@@ -355,10 +355,12 @@ int lbfgs(
     }
 
     /*
-       Make sure that the gradients are not zero.
+       Make sure that the initial variables are not a minimizer.
      */
     vecnorm(&gnorm, g, n);
-    if (gnorm == 0.) {
+    vecnorm(&xnorm, x, n);
+    if (xnorm < 1.0) xnorm = 1.0;
+    if (gnorm / xnorm <= param->epsilon) {
         ret = LBFGS_ALREADY_MINIMIZED;
         goto lbfgs_exit;
     }

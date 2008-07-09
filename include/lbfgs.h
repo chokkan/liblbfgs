@@ -263,7 +263,7 @@ typedef struct {
      *  (i.e., \ref orthantwise_c != 0). This parameter b (0 <= b < N)
      *  specifies the index number from which the library computes the
      *  L1 norm of the variables x,
-     *      |x| := |x_{b} + x_{b+1} + ... + x_{N}|
+     *      |x| := |x_{b}| + |x_{b+1}| + ... + |x_{N}| .
      *  In other words, variables x_1, ..., x_{b-1} are not used for
      *  computing the L1 norm. Setting b (0 < b < N), one can protect
      *  variables, x_1, ..., x_{b-1} (e.g., a bias term of logistic
