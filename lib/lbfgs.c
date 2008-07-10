@@ -169,7 +169,22 @@ static int update_trial_interval(
     int *brackt
     );
 
-static lbfgsfloatval_t orthantwise_gnorm(
+static lbfgsfloatval_t owlqn_xnorm1(
+    const lbfgsfloatval_t* x,
+    const int start,
+    const int n
+    );
+
+static lbfgsfloatval_t owlqn_gnorm(
+    const lbfgsfloatval_t* x,
+    const lbfgsfloatval_t* g,
+    const lbfgsfloatval_t c,
+    const int start,
+    const int n
+    );
+
+static void owlqn_direction(
+    lbfgsfloatval_t* d,
     const lbfgsfloatval_t* x,
     const lbfgsfloatval_t* g,
     const lbfgsfloatval_t c,
@@ -324,53 +339,29 @@ int lbfgs(
     /* Evaluate the function value and its gradient. */
     fx = cd.proc_evaluate(cd.instance, x, g, cd.n, 0);
     if (0. < param->orthantwise_c) {
-        /* Compute L1-regularization factor and add it to the object value. */
-        norm = 0.;
-        for (i = param->orthantwise_start;i < n;++i) {
-            norm += fabs(x[i]);
-        }
+        /* Compute the L1 norm of the variable and add it to the object value. */
+        norm = owlqn_xnorm1(x, param->orthantwise_start, n);
         fx += norm * param->orthantwise_c;
     }
 
-    /* We assume the initial hessian matrix H_0 as the identity matrix. */
+    /*
+        Compute the direction;
+        we assume the initial hessian matrix H_0 as the identity matrix.
+     */
     if (param->orthantwise_c == 0.) {
         vecncpy(d, g, n);
     } else {
-        /* Compute the negative of gradients. */
-        for (i = 0;i < param->orthantwise_start;++i) {
-            d[i] = -g[i];
-        }
-
-        /* Compute the negative of psuedo-gradients. */
-        for (i = param->orthantwise_start;i < n;++i) {
-            if (x[i] < 0.) {
-                /* Differentiable. */
-                d[i] = -g[i] + param->orthantwise_c;
-            } else if (0. < x[i]) {
-                /* Differentiable. */
-                d[i] = -g[i] - param->orthantwise_c;
-            } else {
-                if (g[i] < -param->orthantwise_c) {
-                    /* Take the right partial derivative. */
-                    d[i] = -g[i] - param->orthantwise_c;
-                } else if (param->orthantwise_c < g[i]) {
-                    /* Take the left partial derivative. */
-                    d[i] = -g[i] + param->orthantwise_c;
-                } else {
-                    d[i] = 0.;
-                }
-            }
-        }
+        owlqn_direction(d, x, g, param->orthantwise_c, param->orthantwise_start, n);
     }
 
     /*
        Make sure that the initial variables are not a minimizer.
      */
     vecnorm(&xnorm, x, n);
-    if (param->orthantwise_c != 0.) {
-        gnorm = orthantwise_gnorm(x, g, param->orthantwise_c, param->orthantwise_start, n);
-    } else {
+    if (param->orthantwise_c == 0.) {
         vecnorm(&gnorm, g, n);
+    } else {
+        gnorm = owlqn_gnorm(x, g, param->orthantwise_c, param->orthantwise_start, n);
     }
     if (xnorm < 1.0) xnorm = 1.0;
     if (gnorm / xnorm <= param->epsilon) {
@@ -400,7 +391,7 @@ int lbfgs(
         /* Compute x and g norms. */
         vecnorm(&xnorm, x, n);
         if (param->orthantwise_c != 0.) {
-            gnorm = orthantwise_gnorm(x, g, param->orthantwise_c, param->orthantwise_start, n);
+            gnorm = owlqn_gnorm(x, g, param->orthantwise_c, param->orthantwise_start, n);
         } else {
             vecnorm(&gnorm, g, n);
         }
@@ -461,36 +452,13 @@ int lbfgs(
         ++k;
         end = (end + 1) % m;
 
+        /* Compute the steepest direction. */
         if (param->orthantwise_c == 0.) {
             /* Compute the negative of gradients. */
             vecncpy(d, g, n);
         } else {
-            /* Compute the negative of gradients. */
-            for (i = 0;i < param->orthantwise_start;++i) {
-                d[i] = -g[i];
-            }
-
-            /* Compute the negative of psuedo-gradients. */
-            for (i = param->orthantwise_start;i < n;++i) {
-                if (x[i] < 0.) {
-                    /* Differentiable. */
-                    d[i] = -g[i] + param->orthantwise_c;
-                } else if (0. < x[i]) {
-                    /* Differentiable. */
-                    d[i] = -g[i] - param->orthantwise_c;
-                } else {
-                    if (g[i] < -param->orthantwise_c) {
-                        /* Take the right partial derivative. */
-                        d[i] = -g[i] - param->orthantwise_c;
-                    } else if (param->orthantwise_c < g[i]) {
-                        /* Take the left partial derivative. */
-                        d[i] = -g[i] + param->orthantwise_c;
-                    } else {
-                        d[i] = 0.;
-                    }
-                }
-            }
-            /* Store the steepest direction.*/
+            owlqn_direction(d, x, g, param->orthantwise_c, param->orthantwise_start, n);
+            /* Store the steepest direction to w.*/
             veccpy(w, d, n);
         }
 
@@ -642,11 +610,8 @@ static int line_search_backtracking(
         /* Evaluate the function and gradient values. */
         *f = cd->proc_evaluate(cd->instance, x, g, cd->n, *stp);
         if (0. < param->orthantwise_c) {
-            /* Compute L1-regularization factor and add it to the object value. */
-            norm = 0.;
-            for (i = param->orthantwise_start;i < n;++i) {
-                norm += fabs(x[i]);
-            }
+            /* Compute the L1 norm of the variables and add it to the object value. */
+            norm = owlqn_xnorm1(x, param->orthantwise_start, n);
             *f += norm * param->orthantwise_c;
         }
 
@@ -812,11 +777,8 @@ static int line_search_morethuente(
         /* Evaluate the function and gradient values. */
         *f = cd->proc_evaluate(cd->instance, x, g, cd->n, *stp);
         if (0. < param->orthantwise_c) {
-            /* Compute L1-regularization factor and add it to the object value. */
-            norm = 0.;
-            for (i = param->orthantwise_start;i < n;++i) {
-                norm += fabs(x[i]);
-            }
+            /* Compute the L1 norm of the variables and add it to the object value. */
+            norm = owlqn_xnorm1(x, param->orthantwise_start, n);
             *f += norm * param->orthantwise_c;
 
             dg = 0.;
@@ -1235,7 +1197,24 @@ static int update_trial_interval(
     return 0;
 }
 
-static lbfgsfloatval_t orthantwise_gnorm(
+
+static lbfgsfloatval_t owlqn_xnorm1(
+    const lbfgsfloatval_t* x,
+    const int start,
+    const int n
+    )
+{
+    int i;
+    lbfgsfloatval_t norm = 0.;
+
+    for (i = start;i < n;++i) {
+        norm += fabs(x[i]);
+    }
+
+    return norm;
+}
+
+static lbfgsfloatval_t owlqn_gnorm(
     const lbfgsfloatval_t* x,
     const lbfgsfloatval_t* g,
     const lbfgsfloatval_t c,
@@ -1262,4 +1241,42 @@ static lbfgsfloatval_t orthantwise_gnorm(
     }
 
     return sqrt(norm);
+}
+
+static void owlqn_direction(
+    lbfgsfloatval_t* d,
+    const lbfgsfloatval_t* x,
+    const lbfgsfloatval_t* g,
+    const lbfgsfloatval_t c,
+    const int start,
+    const int n
+    )
+{
+    int i;
+
+    /* Compute the negative of gradients. */
+    for (i = 0;i < start;++i) {
+        d[i] = -g[i];
+    }
+
+    /* Compute the negative of psuedo-gradients. */
+    for (i = start;i < n;++i) {
+        if (x[i] < 0.) {
+            /* Differentiable. */
+            d[i] = -g[i] + c;
+        } else if (0. < x[i]) {
+            /* Differentiable. */
+            d[i] = -g[i] - c;
+        } else {
+            if (g[i] < -c) {
+                /* Take the right partial derivative. */
+                d[i] = -g[i] - c;
+            } else if (c < g[i]) {
+                /* Take the left partial derivative. */
+                d[i] = -g[i] + c;
+            } else {
+                d[i] = 0.;
+            }
+        }
+    }
 }
