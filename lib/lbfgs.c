@@ -192,6 +192,13 @@ static void owlqn_direction(
     const int n
     );
 
+static void owlqn_project(
+    lbfgsfloatval_t* d,
+    const lbfgsfloatval_t* sign,
+    const int start,
+    const int n
+    );
+
 
 #if     defined(USE_SSE) && (defined(__SSE__) || defined(__SSE2__))
 static int round_out_variables(int n)
@@ -600,11 +607,7 @@ static int line_search_backtracking(
 
         if (param->orthantwise_c != 0.) {
             /* The current point is projected onto the orthant of the initial one. */
-            for (i = param->orthantwise_start;i < n;++i) {
-                if (x[i] * xp[i] < 0.) {
-                    x[i] = 0.;
-                }
-            }
+            owlqn_project(x, xp, param->orthantwise_start, n);
         }
 
         /* Evaluate the function and gradient values. */
@@ -767,11 +770,7 @@ static int line_search_morethuente(
 
         if (param->orthantwise_c != 0.) {
             /* The current point is projected onto the orthant of the previous one. */
-            for (i = param->orthantwise_start;i < n;++i) {
-                if (x[i] * wa[i] < 0.) {
-                    x[i] = 0.;
-                }
-            }
+            owlqn_project(x, wa, param->orthantwise_start, n);
         }
 
         /* Evaluate the function and gradient values. */
@@ -1277,6 +1276,22 @@ static void owlqn_direction(
             } else {
                 d[i] = 0.;
             }
+        }
+    }
+}
+
+static void owlqn_project(
+    lbfgsfloatval_t* d,
+    const lbfgsfloatval_t* sign,
+    const int start,
+    const int n
+    )
+{
+    int i;
+
+    for (i = start;i < n;++i) {
+        if (d[i] * sign[i] < 0) {
+            d[i] = 0;
         }
     }
 }
