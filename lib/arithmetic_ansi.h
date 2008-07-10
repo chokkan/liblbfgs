@@ -120,14 +120,14 @@ inline static void vecdot(lbfgsfloatval_t* s, const lbfgsfloatval_t *x, const lb
     }
 }
 
-inline static void vecnorm(lbfgsfloatval_t* s, const lbfgsfloatval_t *x, const int n)
+inline static void vec2norm(lbfgsfloatval_t* s, const lbfgsfloatval_t *x, const int n)
 {
     vecdot(s, x, x, n);
     *s = (lbfgsfloatval_t)sqrt(*s);
 }
 
-inline static void vecrnorm(lbfgsfloatval_t* s, const lbfgsfloatval_t *x, const int n)
+inline static void vec2norminv(lbfgsfloatval_t* s, const lbfgsfloatval_t *x, const int n)
 {
-    vecnorm(s, x, n);
+    vec2norm(s, x, n);
     *s = (lbfgsfloatval_t)(1.0 / *s);
 }

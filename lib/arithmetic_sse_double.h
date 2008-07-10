@@ -237,7 +237,7 @@ inline static void vecfree(void *memblock)
     _mm_store_sd((s), XMM0); \
 }
 
-#define vecnorm(s, x, n) \
+#define vec2norm(s, x, n) \
 { \
     int i; \
     __m128d XMM0 = _mm_setzero_pd(); \
@@ -261,7 +261,7 @@ inline static void vecfree(void *memblock)
 }
 
 
-#define vecrnorm(s, x, n) \
+#define vec2norminv(s, x, n) \
 { \
     int i; \
     __m128d XMM0 = _mm_setzero_pd(); \
