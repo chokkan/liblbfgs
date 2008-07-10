@@ -74,6 +74,8 @@ typedef double lbfgsfloatval_t;
 enum {
     /** L-BFGS reaches convergence. */
     LBFGS_SUCCESS = 0,
+    LBFGS_CONVERGENCE = 0,
+    LBFGS_STOP,
     /** The initial variables already minimize the objective function. */
     LBFGS_ALREADY_MINIMIZED,
 
@@ -91,6 +93,12 @@ enum {
     LBFGSERR_INVALID_N_SSE,
     /** The array x must be aligned to 16 (for SSE). */
     LBFGSERR_INVALID_X_SSE,
+    /** Invalid parameter lbfgs_parameter_t::epsilon specified. */
+    LBFGSERR_INVALID_EPSILON,
+    /** Invalid parameter lbfgs_parameter_t::past specified. */
+    LBFGSERR_INVALID_TESTPERIOD,
+    /** Invalid parameter lbfgs_parameter_t::delta specified. */
+    LBFGSERR_INVALID_DELTA,
     /** Invalid parameter lbfgs_parameter_t::linesearch specified. */
     LBFGSERR_INVALID_LINESEARCH,
     /** Invalid parameter lbfgs_parameter_t::max_step specified. */
@@ -171,6 +179,9 @@ typedef struct {
      *  \c 1e-5.
      */
     lbfgsfloatval_t epsilon;
+
+    int             past;
+    lbfgsfloatval_t delta;
 
     /**
      * The maximum number of iterations.

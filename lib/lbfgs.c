@@ -111,7 +111,8 @@ struct tag_iteration_data {
 typedef struct tag_iteration_data iteration_data_t;
 
 static const lbfgs_parameter_t _defparam = {
-    6, 1e-5, 0, LBFGS_LINESEARCH_DEFAULT, 20,
+    6, 1e-5, 0, 1e-5,
+    0, LBFGS_LINESEARCH_DEFAULT, 20,
     1e-20, 1e20, 1e-4, 0.9, 1.0e-16,
     0.0, 0,
 };
@@ -255,11 +256,12 @@ int lbfgs(
     const lbfgs_parameter_t* param = (_param != NULL) ? _param : &_defparam;
     const int m = param->m;
 
-    lbfgsfloatval_t *xp = NULL, *g = NULL, *gp = NULL, *d = NULL, *w = NULL;
+    lbfgsfloatval_t *xp = NULL, *g = NULL, *gp = NULL, *d = NULL, *w = NULL, *pf = NULL;
     iteration_data_t *lm = NULL, *it = NULL;
     lbfgsfloatval_t ys, yy;
     lbfgsfloatval_t xnorm, gnorm, beta;
     lbfgsfloatval_t fx = 0.;
+    lbfgsfloatval_t rate = 0.;
     line_search_proc linesearch = line_search_morethuente;
 
     /* Construct a callback data. */
@@ -286,6 +288,15 @@ int lbfgs(
         return LBFGSERR_INVALID_X_SSE;
     }
 #endif/*defined(USE_SSE)*/
+    if (param->epsilon < 0.) {
+        return LBFGSERR_INVALID_EPSILON;
+    }
+    if (param->past < 0) {
+        return LBFGSERR_INVALID_TESTPERIOD;
+    }
+    if (param->delta < 0.) {
+        return LBFGSERR_INVALID_DELTA;
+    }
     if (param->min_step < 0.) {
         return LBFGSERR_INVALID_MINSTEP;
     }
@@ -352,12 +363,22 @@ int lbfgs(
         }
     }
 
+    /* Allocate an array for storing previous values of the objective function. */
+    if (0 < param->past) {
+        pf = (lbfgsfloatval_t*)vecalloc(param->past * sizeof(lbfgsfloatval_t));
+    }
+
     /* Evaluate the function value and its gradient. */
     fx = cd.proc_evaluate(cd.instance, x, g, cd.n, 0);
     if (0. != param->orthantwise_c) {
         /* Compute the L1 norm of the variable and add it to the object value. */
         xnorm = owlqn_x1norm(x, param->orthantwise_start, n);
         fx += xnorm * param->orthantwise_c;
+    }
+
+    /* Store the initial value of the objective function. */
+    if (pf != NULL) {
+        pf[0] = fx;
     }
 
     /*
@@ -429,6 +450,28 @@ int lbfgs(
             /* Convergence. */
             ret = LBFGS_SUCCESS;
             break;
+        }
+
+        /*
+            Test for stopping criterion.
+            The criterion is given by the following formula:
+                (f(past_x) - f(x)) / f(x) < \delta
+         */
+        if (pf != NULL) {
+            /* We don't test the stopping criterion while k < past. */
+            if (param->past <= k) {
+                /* Compute the relative improvement from the past. */
+                rate = (pf[k % param->past] - fx) / fx;
+
+                /* The stopping criterion. */
+                if (rate < param->delta) {
+                    ret = LBFGS_STOP;
+                    break;
+                }
+            }
+
+            /* Store the current value of the objective function. */
+            pf[k % param->past] = fx;
         }
 
         if (param->max_iterations != 0 && param->max_iterations < k+1) {
@@ -524,6 +567,8 @@ lbfgs_exit:
         *ptr_fx = fx;
     }
 
+    vecfree(pf);
+
     /* Free memory blocks used by this function. */
     if (lm != NULL) {
         for (i = 0;i < m;++i) {
@@ -555,7 +600,7 @@ static int line_search_backtracking(
     const lbfgs_parameter_t *param
     )
 {
-    int i, ret = 0, count = 0;
+    int ret = 0, count = 0;
     lbfgsfloatval_t width = 0.5, norm = 0.;
     lbfgsfloatval_t finit, dginit = 0., dgtest;
 
@@ -639,7 +684,7 @@ static int line_search_morethuente(
     const lbfgs_parameter_t *param
     )
 {
-    int i, count = 0;
+    int count = 0;
     int brackt, stage1, uinfo = 0;
     lbfgsfloatval_t dg, norm;
     lbfgsfloatval_t stx, fx, dgx;
