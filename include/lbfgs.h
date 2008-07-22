@@ -117,6 +117,8 @@ enum {
     LBFGSERR_INVALID_ORTHANTWISE,
     /** Invalid parameter lbfgs_parameter_t::orthantwise_start specified. */
     LBFGSERR_INVALID_ORTHANTWISE_START,
+    /** Invalid parameter lbfgs_parameter_t::orthantwise_end specified. */
+    LBFGSERR_INVALID_ORTHANTWISE_END,
     /** The line-search step went out of the interval of uncertainty. */
     LBFGSERR_OUTOFINTERVAL,
     /** A logic error occurred; alternatively, the interval of uncertainty
@@ -281,6 +283,15 @@ typedef struct {
      *  regression) from being regularized. The default value is zero.
      */
     int             orthantwise_start;
+
+    /**
+     * End index for computing L1 norm of the variables.
+     *  This parameter is valid only for OWL-QN method
+     *  (i.e., \ref orthantwise_c != 0). This parameter e (0 < e <= N)
+     *  specifies the index number at which the library stops computing the
+     *  L1 norm of the variables x,
+     */
+    int             orthantwise_end;
 } lbfgs_parameter_t;
 
 

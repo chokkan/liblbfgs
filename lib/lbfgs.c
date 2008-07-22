@@ -114,7 +114,7 @@ static const lbfgs_parameter_t _defparam = {
     6, 1e-5, 0, 1e-5,
     0, LBFGS_LINESEARCH_DEFAULT, 20,
     1e-20, 1e20, 1e-4, 0.9, 1.0e-16,
-    0.0, 0,
+    0.0, 0, -1,
 };
 
 /* Forward function declarations. */
@@ -253,8 +253,8 @@ int lbfgs(
     lbfgsfloatval_t step;
 
     /* Constant parameters and their default values. */
-    const lbfgs_parameter_t* param = (_param != NULL) ? _param : &_defparam;
-    const int m = param->m;
+    lbfgs_parameter_t param = (_param != NULL) ? (*_param) : _defparam;
+    const int m = param.m;
 
     lbfgsfloatval_t *xp = NULL, *g = NULL, *gp = NULL, *d = NULL, *w = NULL, *pf = NULL;
     iteration_data_t *lm = NULL, *it = NULL;
@@ -288,40 +288,46 @@ int lbfgs(
         return LBFGSERR_INVALID_X_SSE;
     }
 #endif/*defined(USE_SSE)*/
-    if (param->epsilon < 0.) {
+    if (param.epsilon < 0.) {
         return LBFGSERR_INVALID_EPSILON;
     }
-    if (param->past < 0) {
+    if (param.past < 0) {
         return LBFGSERR_INVALID_TESTPERIOD;
     }
-    if (param->delta < 0.) {
+    if (param.delta < 0.) {
         return LBFGSERR_INVALID_DELTA;
     }
-    if (param->min_step < 0.) {
+    if (param.min_step < 0.) {
         return LBFGSERR_INVALID_MINSTEP;
     }
-    if (param->max_step < param->min_step) {
+    if (param.max_step < param.min_step) {
         return LBFGSERR_INVALID_MAXSTEP;
     }
-    if (param->ftol < 0.) {
+    if (param.ftol < 0.) {
         return LBFGSERR_INVALID_FTOL;
     }
-    if (param->gtol < 0.) {
+    if (param.gtol < 0.) {
         return LBFGSERR_INVALID_GTOL;
     }
-    if (param->xtol < 0.) {
+    if (param.xtol < 0.) {
         return LBFGSERR_INVALID_XTOL;
     }
-    if (param->max_linesearch <= 0) {
+    if (param.max_linesearch <= 0) {
         return LBFGSERR_INVALID_MAXLINESEARCH;
     }
-    if (param->orthantwise_c < 0.) {
+    if (param.orthantwise_c < 0.) {
         return LBFGSERR_INVALID_ORTHANTWISE;
     }
-    if (param->orthantwise_start < 0 || n < param->orthantwise_start) {
+    if (param.orthantwise_start < 0 || n < param.orthantwise_start) {
         return LBFGSERR_INVALID_ORTHANTWISE_START;
     }
-    switch (param->linesearch) {
+    if (param.orthantwise_end < 0) {
+        param.orthantwise_end = n;
+    }
+    if (n < param.orthantwise_end) {
+        return LBFGSERR_INVALID_ORTHANTWISE_END;
+    }
+    switch (param.linesearch) {
     case LBFGS_LINESEARCH_MORETHUENTE:
         linesearch = line_search_morethuente;
         break;
@@ -364,16 +370,16 @@ int lbfgs(
     }
 
     /* Allocate an array for storing previous values of the objective function. */
-    if (0 < param->past) {
-        pf = (lbfgsfloatval_t*)vecalloc(param->past * sizeof(lbfgsfloatval_t));
+    if (0 < param.past) {
+        pf = (lbfgsfloatval_t*)vecalloc(param.past * sizeof(lbfgsfloatval_t));
     }
 
     /* Evaluate the function value and its gradient. */
     fx = cd.proc_evaluate(cd.instance, x, g, cd.n, 0);
-    if (0. != param->orthantwise_c) {
+    if (0. != param.orthantwise_c) {
         /* Compute the L1 norm of the variable and add it to the object value. */
-        xnorm = owlqn_x1norm(x, param->orthantwise_start, n);
-        fx += xnorm * param->orthantwise_c;
+        xnorm = owlqn_x1norm(x, param.orthantwise_start, param.orthantwise_end);
+        fx += xnorm * param.orthantwise_c;
     }
 
     /* Store the initial value of the objective function. */
@@ -385,23 +391,23 @@ int lbfgs(
         Compute the direction;
         we assume the initial hessian matrix H_0 as the identity matrix.
      */
-    if (param->orthantwise_c == 0.) {
+    if (param.orthantwise_c == 0.) {
         vecncpy(d, g, n);
     } else {
-        owlqn_direction(d, x, g, param->orthantwise_c, param->orthantwise_start, n);
+        owlqn_direction(d, x, g, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
     }
 
     /*
        Make sure that the initial variables are not a minimizer.
      */
     vec2norm(&xnorm, x, n);
-    if (param->orthantwise_c == 0.) {
+    if (param.orthantwise_c == 0.) {
         vec2norm(&gnorm, g, n);
     } else {
-        gnorm = owlqn_g2norm(x, g, param->orthantwise_c, param->orthantwise_start, n);
+        gnorm = owlqn_g2norm(x, g, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
     }
     if (xnorm < 1.0) xnorm = 1.0;
-    if (gnorm / xnorm <= param->epsilon) {
+    if (gnorm / xnorm <= param.epsilon) {
         ret = LBFGS_ALREADY_MINIMIZED;
         goto lbfgs_exit;
     }
@@ -419,7 +425,7 @@ int lbfgs(
         veccpy(gp, g, n);
 
         /* Search for an optimal step. */
-        ls = linesearch(n, x, &fx, g, d, &step, w, &cd, param);
+        ls = linesearch(n, x, &fx, g, d, &step, w, &cd, &param);
         if (ls < 0) {
             ret = ls;
             goto lbfgs_exit;
@@ -427,10 +433,10 @@ int lbfgs(
 
         /* Compute x and g norms. */
         vec2norm(&xnorm, x, n);
-        if (param->orthantwise_c == 0.) {
+        if (param.orthantwise_c == 0.) {
             vec2norm(&gnorm, g, n);
         } else {
-            gnorm = owlqn_g2norm(x, g, param->orthantwise_c, param->orthantwise_start, n);
+            gnorm = owlqn_g2norm(x, g, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
         }
 
         /* Report the progress. */
@@ -446,7 +452,7 @@ int lbfgs(
                 |g(x)| / \max(1, |x|) < \epsilon
          */
         if (xnorm < 1.0) xnorm = 1.0;
-        if (gnorm / xnorm <= param->epsilon) {
+        if (gnorm / xnorm <= param.epsilon) {
             /* Convergence. */
             ret = LBFGS_SUCCESS;
             break;
@@ -459,22 +465,22 @@ int lbfgs(
          */
         if (pf != NULL) {
             /* We don't test the stopping criterion while k < past. */
-            if (param->past <= k) {
+            if (param.past <= k) {
                 /* Compute the relative improvement from the past. */
-                rate = (pf[k % param->past] - fx) / fx;
+                rate = (pf[k % param.past] - fx) / fx;
 
                 /* The stopping criterion. */
-                if (rate < param->delta) {
+                if (rate < param.delta) {
                     ret = LBFGS_STOP;
                     break;
                 }
             }
 
             /* Store the current value of the objective function. */
-            pf[k % param->past] = fx;
+            pf[k % param.past] = fx;
         }
 
-        if (param->max_iterations != 0 && param->max_iterations < k+1) {
+        if (param.max_iterations != 0 && param.max_iterations < k+1) {
             /* Maximum number of iterations. */
             ret = LBFGSERR_MAXIMUMITERATION;
             break;
@@ -512,11 +518,11 @@ int lbfgs(
         end = (end + 1) % m;
 
         /* Compute the steepest direction. */
-        if (param->orthantwise_c == 0.) {
+        if (param.orthantwise_c == 0.) {
             /* Compute the negative of gradients. */
             vecncpy(d, g, n);
         } else {
-            owlqn_direction(d, x, g, param->orthantwise_c, param->orthantwise_start, n);
+            owlqn_direction(d, x, g, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
             /* Store the steepest direction to w.*/
             veccpy(w, d, n);
         }
@@ -547,8 +553,8 @@ int lbfgs(
         /*
             Constrain the search direction for orthant-wise updates.
          */
-        if (param->orthantwise_c != 0.) {
-            for (i = param->orthantwise_start;i < n;++i) {
+        if (param.orthantwise_c != 0.) {
+            for (i = param.orthantwise_start;i < param.orthantwise_end;++i) {
                 if (d[i] * w[i] <= 0) {
                     d[i] = 0;
                 }
@@ -611,7 +617,7 @@ static int line_search_backtracking(
 
     /* Compute the initial gradient in the search direction. */
     if (param->orthantwise_c != 0.) {
-        dginit = owlqn_direction_line(x, g, s, param->orthantwise_c, param->orthantwise_start, n);
+        dginit = owlqn_direction_line(x, g, s, param->orthantwise_c, param->orthantwise_start, param->orthantwise_end);
     } else {
         vecdot(&dginit, g, s, n);
     }
@@ -634,14 +640,14 @@ static int line_search_backtracking(
 
         if (param->orthantwise_c != 0.) {
             /* The current point is projected onto the orthant of the initial one. */
-            owlqn_project(x, xp, param->orthantwise_start, n);
+            owlqn_project(x, xp, param->orthantwise_start, param->orthantwise_end);
         }
 
         /* Evaluate the function and gradient values. */
         *f = cd->proc_evaluate(cd->instance, x, g, cd->n, *stp);
         if (0. < param->orthantwise_c) {
             /* Compute the L1 norm of the variables and add it to the object value. */
-            norm = owlqn_x1norm(x, param->orthantwise_start, n);
+            norm = owlqn_x1norm(x, param->orthantwise_start, param->orthantwise_end);
             *f += norm * param->orthantwise_c;
         }
 
@@ -701,7 +707,7 @@ static int line_search_morethuente(
 
     /* Compute the initial gradient in the search direction. */
     if (param->orthantwise_c != 0.) {
-        dginit = owlqn_direction_line(x, g, s, param->orthantwise_c, param->orthantwise_start, n);
+        dginit = owlqn_direction_line(x, g, s, param->orthantwise_c, param->orthantwise_start, param->orthantwise_end);
     } else {
         vecdot(&dginit, g, s, n);
     }
@@ -769,17 +775,17 @@ static int line_search_morethuente(
 
         if (param->orthantwise_c != 0.) {
             /* The current point is projected onto the orthant of the previous one. */
-            owlqn_project(x, wa, param->orthantwise_start, n);
+            owlqn_project(x, wa, param->orthantwise_start, param->orthantwise_end);
         }
 
         /* Evaluate the function and gradient values. */
         *f = cd->proc_evaluate(cd->instance, x, g, cd->n, *stp);
         if (0. < param->orthantwise_c) {
             /* Compute the L1 norm of the variables and add it to the object value. */
-            norm = owlqn_x1norm(x, param->orthantwise_start, n);
+            norm = owlqn_x1norm(x, param->orthantwise_start, param->orthantwise_end);
             *f += norm * param->orthantwise_c;
 
-            dg = owlqn_direction_line(x, g, s, param->orthantwise_c, param->orthantwise_start, n);
+            dg = owlqn_direction_line(x, g, s, param->orthantwise_c, param->orthantwise_start, param->orthantwise_end);
         } else {
             vecdot(&dg, g, s, n);
         }
