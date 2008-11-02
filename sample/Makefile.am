@@ -1,6 +1,7 @@
 # $Id$
 
 EXTRA_DIST = \
+	sample.cpp \
 	sample.vcproj
 
 noinst_PROGRAMS = sample

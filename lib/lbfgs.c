@@ -131,7 +131,7 @@ typedef int (*line_search_proc)(
     const lbfgs_parameter_t *param
     );
     
-static int line_search_backtracking(
+static int line_search_backtracking_loose(
     int n,
     lbfgsfloatval_t *x,
     lbfgsfloatval_t *f,
@@ -344,10 +344,10 @@ int lbfgs(
         linesearch = line_search_morethuente;
         break;
     case LBFGS_LINESEARCH_BACKTRACKING:
-        linesearch = line_search_backtracking;
-        break;
-    case LBFGS_LINESEARCH_BACKTRACKING_STRONGWOLFE:
         linesearch = line_search_backtracking_strong_wolfe;
+        break;
+    case LBFGS_LINESEARCH_BACKTRACKING_LOOSE:
+        linesearch = line_search_backtracking_loose;
         break;
     default:
         return LBFGSERR_INVALID_LINESEARCH;
@@ -609,7 +609,7 @@ lbfgs_exit:
 
 
 
-static int line_search_backtracking(
+static int line_search_backtracking_loose(
     int n,
     lbfgsfloatval_t *x,
     lbfgsfloatval_t *f,

@@ -152,10 +152,10 @@ enum {
     LBFGS_LINESEARCH_DEFAULT = 0,
     /** MoreThuente method proposd by More and Thuente. */
     LBFGS_LINESEARCH_MORETHUENTE = 0,
-    /** Backtracking method. */
-    LBFGS_LINESEARCH_BACKTRACKING,
     /** Backtracking method with strong Wolfe condition. */
-    LBFGS_LINESEARCH_BACKTRACKING_STRONGWOLFE,
+    LBFGS_LINESEARCH_BACKTRACKING,
+    /** Backtracking method with regular Wolfe condition. */
+    LBFGS_LINESEARCH_BACKTRACKING_LOOSE,
 };
 
 /**
@@ -529,12 +529,24 @@ This library is used by:
 
 @section download Download
 
-- <a href="http://www.chokkan.org/software/dist/liblbfgs-1.5.tar.gz">Source code</a>
+- <a href="http://www.chokkan.org/software/dist/liblbfgs-1.6.tar.gz">Source code</a>
 
 libLBFGS is distributed under the term of the
 <a href="http://opensource.org/licenses/mit-license.php">MIT license</a>.
 
 @section changelog History
+- Version 1.6 (2008-11-02):
+    - Improved line-search algorithm with strong Wolfe condition, which was
+      contributed by Takashi Imamichi. This routine is now default for
+      ::LBFGS_LINESEARCH_BACKTRACKING. The previous line search algorithm
+      with regular Wolfe condition is still available as
+      ::LBFGS_LINESEARCH_BACKTRACKING_LOOSE.
+    - Configurable stop index for L1-norm computation. A member variable
+      ::lbfgs_parameter_t::orthantwise_end was added to specify the index
+      number at which the library stops computing the L1 norm of the
+      variables. This is useful to prevent some variables from being
+      regularized by the OW-LQN method.
+    - A sample program written in C++ (sample/sample.cpp).
 - Version 1.5 (2008-07-10):
     - Configurable starting index for L1-norm computation. A member variable
       ::lbfgs_parameter_t::orthantwise_start was added to specify the index
