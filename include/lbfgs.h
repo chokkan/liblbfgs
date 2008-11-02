@@ -154,6 +154,8 @@ enum {
     LBFGS_LINESEARCH_MORETHUENTE = 0,
     /** Backtracking method. */
     LBFGS_LINESEARCH_BACKTRACKING,
+    /** Backtracking method with strong Wolfe condition. */
+    LBFGS_LINESEARCH_BACKTRACKING_STRONGWOLFE,
 };
 
 /**
