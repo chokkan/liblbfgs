@@ -482,6 +482,9 @@ int lbfgs(
             owlqn_pseudo_gradient(pg, x, g, n, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
         }
         if (ls < 0) {
+            /* Revert to the previous point. */
+            veccpy(x, xp, n);
+            veccpy(g, gp, n);
             ret = ls;
             goto lbfgs_exit;
         }
@@ -702,8 +705,7 @@ static int line_search_backtracking_owlqn(
 
         if (*stp < param->min_step) {
             /* The step is the minimum value. */
-            ret = LBFGSERR_MINIMUMSTEP;
-            break;
+            return LBFGSERR_MINIMUMSTEP;
         }
         if (*stp > param->max_step) {
             /* The step is the maximum value. */
@@ -711,17 +713,11 @@ static int line_search_backtracking_owlqn(
         }
         if (param->max_linesearch <= count) {
             /* Maximum number of iteration. */
-            ret = LBFGSERR_MAXIMUMLINESEARCH;
-            break;
+            return LBFGSERR_MAXIMUMLINESEARCH;
         }
 
         (*stp) *= width;
     }
-
-    /* Revert to the previous position. */
-    veccpy(x, xp, n);
-    veccpy(g, gp, n);
-    return ret;
 }
 
 
@@ -790,8 +786,7 @@ static int line_search_backtracking_loose(
         }
         if (*stp < param->min_step) {
             /* The step is the minimum value. */
-            ret = LBFGSERR_MINIMUMSTEP;
-            break;
+            return LBFGSERR_MINIMUMSTEP;
         }
         if (*stp > param->max_step) {
             /* The step is the maximum value. */
@@ -799,16 +794,11 @@ static int line_search_backtracking_loose(
         }
         if (param->max_linesearch <= count) {
             /* Maximum number of iteration. */
-            ret = LBFGSERR_MAXIMUMLINESEARCH;
-            break;
+            return LBFGSERR_MAXIMUMLINESEARCH;
         }
 
         (*stp) *= width;
     }
-
-    /* Revert to the previous position. */
-    veccpy(x, xp, n);
-    return ret;
 }
 
 
@@ -892,8 +882,7 @@ static int line_search_backtracking_strong_wolfe(
 
         if (*stp < param->min_step) {
             /* The step is the minimum value. */
-            ret = LBFGSERR_MINIMUMSTEP;
-            break;
+            return LBFGSERR_MINIMUMSTEP;
         }
         if (*stp > param->max_step) {
             /* The step is the maximum value. */
@@ -901,16 +890,11 @@ static int line_search_backtracking_strong_wolfe(
         }
         if (param->max_linesearch <= count) {
             /* Maximum number of iteration. */
-            ret = LBFGSERR_MAXIMUMLINESEARCH;
-            break;
+            return LBFGSERR_MAXIMUMLINESEARCH;
         }
 
         *stp *= mult;
     }
-
-    /* Revert to the previous position. */
-    veccpy(x, xp, n);
-    return ret;
 }
 
 
