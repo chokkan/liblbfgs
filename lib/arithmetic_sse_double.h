@@ -1,7 +1,7 @@
 /*
  *      SSE2 implementation of vector oprations (64bit double).
  *
- * Copyright (c) 2007,2008, Naoaki Okazaki
+ * Copyright (c) 2007,2008,2009 Naoaki Okazaki
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
