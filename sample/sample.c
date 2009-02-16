@@ -64,8 +64,8 @@ int main(int argc, char *argv)
 
     /* Initialize the parameters for the L-BFGS optimization. */
     lbfgs_parameter_init(&param);
-    param.orthantwise_c = 1;
-    /* param.linesearch = LBFGS_LINESEARCH_BACKTRACKING_STRONG; */
+    //param.orthantwise_c = 1;
+    param.linesearch = LBFGS_LINESEARCH_BACKTRACKING_STRONG;
 
     /*
         Start the L-BFGS optimization; this will invoke the callback functions

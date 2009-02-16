@@ -196,23 +196,6 @@ static lbfgsfloatval_t owlqn_x1norm(
     const int n
     );
 
-static lbfgsfloatval_t owlqn_g2norm(
-    const lbfgsfloatval_t* x,
-    const lbfgsfloatval_t* g,
-    const lbfgsfloatval_t c,
-    const int start,
-    const int n
-    );
-
-static void owlqn_direction(
-    lbfgsfloatval_t* d,
-    const lbfgsfloatval_t* x,
-    const lbfgsfloatval_t* g,
-    const lbfgsfloatval_t c,
-    const int start,
-    const int n
-    );
-
 static void owlqn_pseudo_gradient(
     lbfgsfloatval_t* pg,
     const lbfgsfloatval_t* x,
@@ -221,15 +204,6 @@ static void owlqn_pseudo_gradient(
     const lbfgsfloatval_t c,
     const int start,
     const int end
-    );
-
-static lbfgsfloatval_t owlqn_direction_line(
-    const lbfgsfloatval_t* x,
-    const lbfgsfloatval_t* g,
-    const lbfgsfloatval_t* s,
-    const lbfgsfloatval_t c,
-    const int start,
-    const int n
     );
 
 static void owlqn_project(
@@ -1306,74 +1280,6 @@ static lbfgsfloatval_t owlqn_x1norm(
     return norm;
 }
 
-static lbfgsfloatval_t owlqn_g2norm(
-    const lbfgsfloatval_t* x,
-    const lbfgsfloatval_t* g,
-    const lbfgsfloatval_t c,
-    const int start,
-    const int n
-    )
-{
-    int i;
-    lbfgsfloatval_t d = 0.;
-    lbfgsfloatval_t norm = 0.;
-
-    for (i = 0;i < start;++i) {
-        norm += g[i] * g[i];
-    }
-
-    for (i = start;i < n;++i) {
-        d = g[i];
-        if (x[i] < 0.) {
-            d -= c;
-        } else if (0. < x[i]) {
-            d += c;
-        }
-        norm += d * d;
-    }
-
-    return sqrt(norm);
-}
-
-static void owlqn_direction(
-    lbfgsfloatval_t* d,
-    const lbfgsfloatval_t* x,
-    const lbfgsfloatval_t* g,
-    const lbfgsfloatval_t c,
-    const int start,
-    const int n
-    )
-{
-    int i;
-
-    /* Compute the negative of gradients. */
-    for (i = 0;i < start;++i) {
-        d[i] = -g[i];
-    }
-
-    /* Compute the negative of psuedo-gradients. */
-    for (i = start;i < n;++i) {
-        if (x[i] < 0.) {
-            /* Differentiable. */
-            d[i] = -g[i] + c;
-        } else if (0. < x[i]) {
-            /* Differentiable. */
-            d[i] = -g[i] - c;
-        } else {
-            if (g[i] < -c) {
-                /* Take the right partial derivative. */
-                d[i] = -g[i] - c;
-            } else if (c < g[i]) {
-                /* Take the left partial derivative. */
-                d[i] = -g[i] + c;
-            } else {
-                /* The gradient is in the range of [-C, C]. */
-                d[i] = 0.;
-            }
-        }
-    }
-}
-
 static void owlqn_pseudo_gradient(
     lbfgsfloatval_t* pg,
     const lbfgsfloatval_t* x,
@@ -1415,51 +1321,6 @@ static void owlqn_pseudo_gradient(
     for (i = end;i < n;++i) {
         pg[i] = g[i];
     }
-}
-
-
-static lbfgsfloatval_t owlqn_direction_line(
-    const lbfgsfloatval_t* x,
-    const lbfgsfloatval_t* g,
-    const lbfgsfloatval_t* s,
-    const lbfgsfloatval_t c,
-    const int start,
-    const int n
-    )
-{
-    int i;
-    lbfgsfloatval_t d = 0.;
-
-    /* Compute the negative of gradients. */
-    for (i = 0;i < start;++i) {
-        d += s[i] * g[i];
-    }
-
-    /* Use psuedo-gradients for orthant-wise updates. */
-    for (i = start;i < n;++i) {
-        /* Notice that:
-            (-s[i] < 0)  <==>  (g[i] < -param->orthantwise_c)
-            (-s[i] > 0)  <==>  (param->orthantwise_c < g[i])
-           as the result of the lbfgs() function for orthant-wise updates.
-         */
-        if (s[i] != 0.) {
-            if (x[i] < 0.) {
-                /* Differentiable. */
-                d += s[i] * (g[i] - c);
-            } else if (0. < x[i]) {
-                /* Differentiable. */
-                d += s[i] * (g[i] + c);
-            } else if (s[i] < 0.) {
-                /* Take the left partial derivative. */
-                d += s[i] * (g[i] - c);
-            } else if (0. < s[i]) {
-                /* Take the right partial derivative. */
-                d += s[i] * (g[i] + c);
-            }
-        }
-    }
-
-    return d;
 }
 
 static void owlqn_project(
