@@ -113,7 +113,7 @@ typedef struct tag_iteration_data iteration_data_t;
 static const lbfgs_parameter_t _defparam = {
     6, 1e-5, 0, 1e-5,
     0, LBFGS_LINESEARCH_DEFAULT, 100,
-    1e-20, 1e20, 1e-4, 0.9, 1.0e-16,
+    1e-20, 1e20, 0.1, 0.9, 1.0e-16,
     0.0, 0, -1,
 };
 
@@ -1601,7 +1601,7 @@ static void owlqn_project(
     int i;
 
     for (i = start;i < end;++i) {
-        if (d[i] * sign[i] < 0) {
+        if (d[i] * sign[i] <= 0) {
             d[i] = 0;
         }
     }
