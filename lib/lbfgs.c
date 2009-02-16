@@ -746,11 +746,7 @@ static int line_search_backtracking_loose(
     }
 
     /* Compute the initial gradient in the search direction. */
-    if (param->orthantwise_c != 0.) {
-        dginit = owlqn_direction_line(x, g, s, param->orthantwise_c, param->orthantwise_start, param->orthantwise_end);
-    } else {
-        vecdot(&dginit, g, s, n);
-    }
+    vecdot(&dginit, g, s, n);
 
     /* Make sure that s points to a descent direction. */
     if (0 < dginit) {
@@ -765,18 +761,8 @@ static int line_search_backtracking_loose(
         veccpy(x, xp, n);
         vecadd(x, s, *stp, n);
 
-        if (param->orthantwise_c != 0.) {
-            /* The current point is projected onto the orthant of the initial one. */
-            owlqn_project(x, xp, param->orthantwise_start, param->orthantwise_end);
-        }
-
         /* Evaluate the function and gradient values. */
         *f = cd->proc_evaluate(cd->instance, x, g, cd->n, *stp);
-        if (0. < param->orthantwise_c) {
-            /* Compute the L1 norm of the variables and add it to the object value. */
-            norm = owlqn_x1norm(x, param->orthantwise_start, param->orthantwise_end);
-            *f += norm * param->orthantwise_c;
-        }
 
         ++count;
 
