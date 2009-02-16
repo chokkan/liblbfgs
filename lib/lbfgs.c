@@ -603,6 +603,14 @@ int lbfgs(
             j = (j + 1) % m;        /* if (++j == m) j = 0; */
         }
 
+        if (param.orthantwise_c != 0.) {
+            vecdot(&gnorm, d, pg, n);
+            if (gnorm > 0) {
+                vecncpy(gp, pg, n);
+                owlqn_project(d, gp, 0, n);
+            }
+        }
+
         /*
             Now the search direction d is ready. We try step = 1 first.
          */
