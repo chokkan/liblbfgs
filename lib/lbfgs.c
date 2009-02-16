@@ -126,6 +126,8 @@ typedef int (*line_search_proc)(
     lbfgsfloatval_t *g,
     lbfgsfloatval_t *s,
     lbfgsfloatval_t *stp,
+    const lbfgsfloatval_t* xp,
+    const lbfgsfloatval_t* gp,
     lbfgsfloatval_t *wa,
     callback_data_t *cd,
     const lbfgs_parameter_t *param
@@ -138,6 +140,8 @@ static int line_search_backtracking_loose(
     lbfgsfloatval_t *g,
     lbfgsfloatval_t *s,
     lbfgsfloatval_t *stp,
+    const lbfgsfloatval_t* xp,
+    const lbfgsfloatval_t* gp,
     lbfgsfloatval_t *wa,
     callback_data_t *cd,
     const lbfgs_parameter_t *param
@@ -150,7 +154,9 @@ static int line_search_backtracking_strong_wolfe(
     lbfgsfloatval_t *g,
     lbfgsfloatval_t *s,
     lbfgsfloatval_t *stp,
-    lbfgsfloatval_t *xp,
+    const lbfgsfloatval_t* xp,
+    const lbfgsfloatval_t* gp,
+    lbfgsfloatval_t *wa,
     callback_data_t *cd,
     const lbfgs_parameter_t *param
     );
@@ -162,6 +168,8 @@ static int line_search_morethuente(
     lbfgsfloatval_t *g,
     lbfgsfloatval_t *s,
     lbfgsfloatval_t *stp,
+    const lbfgsfloatval_t* xp,
+    const lbfgsfloatval_t* gp,
     lbfgsfloatval_t *wa,
     callback_data_t *cd,
     const lbfgs_parameter_t *param
@@ -440,7 +448,7 @@ int lbfgs(
         veccpy(gp, g, n);
 
         /* Search for an optimal step. */
-        ls = linesearch(n, x, &fx, g, d, &step, w, &cd, &param);
+        ls = linesearch(n, x, &fx, g, d, &step, xp, gp, w, &cd, &param);
         if (ls < 0) {
             ret = ls;
             goto lbfgs_exit;
@@ -616,7 +624,9 @@ static int line_search_backtracking_loose(
     lbfgsfloatval_t *g,
     lbfgsfloatval_t *s,
     lbfgsfloatval_t *stp,
-    lbfgsfloatval_t *xp,
+    const lbfgsfloatval_t* xp,
+    const lbfgsfloatval_t* gp,
+    lbfgsfloatval_t *wp,
     callback_data_t *cd,
     const lbfgs_parameter_t *param
     )
@@ -645,9 +655,6 @@ static int line_search_backtracking_loose(
     /* The initial value of the objective function. */
     finit = *f;
     dgtest = param->ftol * dginit;
-
-    /* Copy the value of x to the work area. */
-    veccpy(xp, x, n);
 
     for (;;) {
         veccpy(x, xp, n);
@@ -700,7 +707,9 @@ static int line_search_backtracking_strong_wolfe(
     lbfgsfloatval_t *g,
     lbfgsfloatval_t *s,
     lbfgsfloatval_t *stp,
-    lbfgsfloatval_t *xp,
+    const lbfgsfloatval_t* xp,
+    const lbfgsfloatval_t* gp,
+    lbfgsfloatval_t *wp,
     callback_data_t *cd,
     const lbfgs_parameter_t *param
     )
@@ -730,9 +739,6 @@ static int line_search_backtracking_strong_wolfe(
     /* The initial value of the objective function. */
     finit = *f;
     dgtest = param->ftol * dginit;
-
-    /* Copy the value of x to the work area. */
-    veccpy(xp, x, n);
 
     for (;;) {
         veccpy(x, xp, n);
@@ -799,6 +805,8 @@ static int line_search_morethuente(
     lbfgsfloatval_t *g,
     lbfgsfloatval_t *s,
     lbfgsfloatval_t *stp,
+    const lbfgsfloatval_t* xp,
+    const lbfgsfloatval_t* gp,
     lbfgsfloatval_t *wa,
     callback_data_t *cd,
     const lbfgs_parameter_t *param
