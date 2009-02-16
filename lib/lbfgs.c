@@ -250,7 +250,7 @@ static void owlqn_project(
     lbfgsfloatval_t* d,
     const lbfgsfloatval_t* sign,
     const int start,
-    const int n
+    const int end
     );
 
 
@@ -605,9 +605,9 @@ int lbfgs(
 
         if (param.orthantwise_c != 0.) {
             vecdot(&gnorm, d, pg, n);
-            if (gnorm > 0) {
+            if (gnorm >= 0) {
                 vecncpy(gp, pg, n);
-                owlqn_project(d, gp, 0, n);
+                owlqn_project(d, gp, param.orthantwise_start, param.orthantwise_end);
             }
         }
 
@@ -1594,12 +1594,12 @@ static void owlqn_project(
     lbfgsfloatval_t* d,
     const lbfgsfloatval_t* sign,
     const int start,
-    const int n
+    const int end
     )
 {
     int i;
 
-    for (i = start;i < n;++i) {
+    for (i = start;i < end;++i) {
         if (d[i] * sign[i] < 0) {
             d[i] = 0;
         }
