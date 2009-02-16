@@ -663,10 +663,11 @@ static int line_search_backtracking_owlqn(
     }
 
     for (;;) {
+        // Update the current point.
         veccpy(x, xp, n);
         vecadd(x, s, *stp, n);
 
-        /* The current point is projected onto the orthant of the initial one. */
+        /* The current point is projected onto the orthant. */
         owlqn_project(x, wp, param->orthantwise_start, param->orthantwise_end);
 
         /* Evaluate the function and gradient values. */
@@ -680,17 +681,22 @@ static int line_search_backtracking_owlqn(
 
         dgtest = 0.;
         for (i = 0;i < n;++i) {
-            dgtest += (x[i] - xp[i]) * g[i];
+            dgtest += (x[i] - xp[i]) * gp[i];
         }
 
         if (*f <= finit + param->ftol * dgtest) {
             /* The sufficient decrease condition. */
             return count;
         }
+
         if (*stp < param->min_step) {
             /* The step is the minimum value. */
             ret = LBFGSERR_MINIMUMSTEP;
             break;
+        }
+        if (*stp > param->max_step) {
+            /* The step is the maximum value. */
+            return LBFGSERR_MAXIMUMSTEP;
         }
         if (param->max_linesearch <= count) {
             /* Maximum number of iteration. */
@@ -775,6 +781,10 @@ static int line_search_backtracking_loose(
             /* The step is the minimum value. */
             ret = LBFGSERR_MINIMUMSTEP;
             break;
+        }
+        if (*stp > param->max_step) {
+            /* The step is the maximum value. */
+            return LBFGSERR_MAXIMUMSTEP;
         }
         if (param->max_linesearch <= count) {
             /* Maximum number of iteration. */
@@ -873,6 +883,10 @@ static int line_search_backtracking_strong_wolfe(
             /* The step is the minimum value. */
             ret = LBFGSERR_MINIMUMSTEP;
             break;
+        }
+        if (*stp > param->max_step) {
+            /* The step is the maximum value. */
+            return LBFGSERR_MAXIMUMSTEP;
         }
         if (param->max_linesearch <= count) {
             /* Maximum number of iteration. */
