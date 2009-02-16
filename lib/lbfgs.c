@@ -147,6 +147,20 @@ static int line_search_backtracking_loose(
     const lbfgs_parameter_t *param
     );
 
+static int line_search_backtracking_owlqn(
+    int n,
+    lbfgsfloatval_t *x,
+    lbfgsfloatval_t *f,
+    lbfgsfloatval_t *g,
+    lbfgsfloatval_t *s,
+    lbfgsfloatval_t *stp,
+    const lbfgsfloatval_t* xp,
+    const lbfgsfloatval_t* gp,
+    lbfgsfloatval_t *wp,
+    callback_data_t *cd,
+    const lbfgs_parameter_t *param
+    );
+
 static int line_search_backtracking_strong_wolfe(
     int n,
     lbfgsfloatval_t *x,
@@ -360,6 +374,7 @@ int lbfgs(
     default:
         return LBFGSERR_INVALID_LINESEARCH;
     }
+    linesearch = line_search_backtracking_owlqn;
 
     /* Allocate working space. */
     xp = (lbfgsfloatval_t*)vecalloc(n * sizeof(lbfgsfloatval_t));
@@ -612,6 +627,83 @@ lbfgs_exit:
     vecfree(g);
     vecfree(xp);
 
+    return ret;
+}
+
+
+
+static int line_search_backtracking_owlqn(
+    int n,
+    lbfgsfloatval_t *x,
+    lbfgsfloatval_t *f,
+    lbfgsfloatval_t *g,
+    lbfgsfloatval_t *s,
+    lbfgsfloatval_t *stp,
+    const lbfgsfloatval_t* xp,
+    const lbfgsfloatval_t* gp,
+    lbfgsfloatval_t *wp,
+    callback_data_t *cd,
+    const lbfgs_parameter_t *param
+    )
+{
+    int i, ret = 0, count = 0;
+    lbfgsfloatval_t width = 0.5, norm = 0.;
+    lbfgsfloatval_t finit = *f, dgtest;
+
+    /* Check the input parameters for errors. */
+    if (*stp <= 0.) {
+        return LBFGSERR_INVALIDPARAMETERS;
+    }
+
+    for (i = 0;i < n;++i) {
+        wp[i] = xp[i];
+        if (wp[i] == 0.) {
+            wp[i] = -gp[i];
+        }
+    }
+
+    for (;;) {
+        veccpy(x, xp, n);
+        vecadd(x, s, *stp, n);
+
+        /* The current point is projected onto the orthant of the initial one. */
+        owlqn_project(x, wp, param->orthantwise_start, param->orthantwise_end);
+
+        /* Evaluate the function and gradient values. */
+        *f = cd->proc_evaluate(cd->instance, x, g, cd->n, *stp);
+
+        /* Compute the L1 norm of the variables and add it to the object value. */
+        norm = owlqn_x1norm(x, param->orthantwise_start, param->orthantwise_end);
+        *f += norm * param->orthantwise_c;
+
+        ++count;
+
+        dgtest = 0.;
+        for (i = 0;i < n;++i) {
+            dgtest += (x[i] - xp[i]) * g[i];
+        }
+
+        if (*f <= finit + param->ftol * dgtest) {
+            /* The sufficient decrease condition. */
+            return count;
+        }
+        if (*stp < param->min_step) {
+            /* The step is the minimum value. */
+            ret = LBFGSERR_MINIMUMSTEP;
+            break;
+        }
+        if (param->max_linesearch <= count) {
+            /* Maximum number of iteration. */
+            ret = LBFGSERR_MAXIMUMLINESEARCH;
+            break;
+        }
+
+        (*stp) *= width;
+    }
+
+    /* Revert to the previous position. */
+    veccpy(x, xp, n);
+    veccpy(g, gp, n);
     return ret;
 }
 
