@@ -335,13 +335,11 @@ int lbfgs(
     }
     if (param.orthantwise_c != 0.) {
         switch (param.linesearch) {
-        case LBFGS_LINESEARCH_MORETHUENTE:
-            return LBFGSERR_INVALID_LINESEARCH;
         case LBFGS_LINESEARCH_BACKTRACKING:
-        case LBFGS_LINESEARCH_BACKTRACKING_STRONG:
             linesearch = line_search_backtracking_owlqn;
             break;
         default:
+            /* Only the backtracking method is available. */
             return LBFGSERR_INVALID_LINESEARCH;
         }
     } else {
