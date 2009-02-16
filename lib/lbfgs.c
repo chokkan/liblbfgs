@@ -915,7 +915,7 @@ static int line_search_morethuente(
 {
     int count = 0;
     int brackt, stage1, uinfo = 0;
-    lbfgsfloatval_t dg, norm;
+    lbfgsfloatval_t dg;
     lbfgsfloatval_t stx, fx, dgx;
     lbfgsfloatval_t sty, fy, dgy;
     lbfgsfloatval_t fxm, dgxm, fym, dgym, fm, dgm;
@@ -929,11 +929,7 @@ static int line_search_morethuente(
     }
 
     /* Compute the initial gradient in the search direction. */
-    if (param->orthantwise_c != 0.) {
-        dginit = owlqn_direction_line(x, g, s, param->orthantwise_c, param->orthantwise_start, param->orthantwise_end);
-    } else {
-        vecdot(&dginit, g, s, n);
-    }
+    vecdot(&dginit, g, s, n);
 
     /* Make sure that s points to a descent direction. */
     if (0 < dginit) {
@@ -996,22 +992,10 @@ static int line_search_morethuente(
         veccpy(x, wa, n);
         vecadd(x, s, *stp, n);
 
-        if (param->orthantwise_c != 0.) {
-            /* The current point is projected onto the orthant of the previous one. */
-            owlqn_project(x, wa, param->orthantwise_start, param->orthantwise_end);
-        }
-
         /* Evaluate the function and gradient values. */
         *f = cd->proc_evaluate(cd->instance, x, g, cd->n, *stp);
-        if (0. < param->orthantwise_c) {
-            /* Compute the L1 norm of the variables and add it to the object value. */
-            norm = owlqn_x1norm(x, param->orthantwise_start, param->orthantwise_end);
-            *f += norm * param->orthantwise_c;
+        vecdot(&dg, g, s, n);
 
-            dg = owlqn_direction_line(x, g, s, param->orthantwise_c, param->orthantwise_start, param->orthantwise_end);
-        } else {
-            vecdot(&dg, g, s, n);
-        }
         ftest1 = finit + *stp * dgtest;
         ++count;
 
