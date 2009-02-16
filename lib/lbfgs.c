@@ -466,7 +466,6 @@ int lbfgs(
         step = 1.0 / sqrt(vecdot(d, d, n))
      */
     vec2norminv(&step, d, n);
-    step = 1.0;
 
     k = 1;
     end = 0;
