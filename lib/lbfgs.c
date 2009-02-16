@@ -357,18 +357,30 @@ int lbfgs(
     if (n < param.orthantwise_end) {
         return LBFGSERR_INVALID_ORTHANTWISE_END;
     }
-    switch (param.linesearch) {
-    case LBFGS_LINESEARCH_MORETHUENTE:
-        linesearch = line_search_morethuente;
-        break;
-    case LBFGS_LINESEARCH_BACKTRACKING:
-    case LBFGS_LINESEARCH_BACKTRACKING_STRONG:
-        linesearch = line_search_backtracking;
-        break;
-    default:
-        return LBFGSERR_INVALID_LINESEARCH;
+    if (param.orthantwise_c != 0.) {
+        switch (param.linesearch) {
+        case LBFGS_LINESEARCH_MORETHUENTE:
+            return LBFGSERR_INVALID_LINESEARCH;
+        case LBFGS_LINESEARCH_BACKTRACKING:
+        case LBFGS_LINESEARCH_BACKTRACKING_STRONG:
+            linesearch = line_search_backtracking_owlqn;
+            break;
+        default:
+            return LBFGSERR_INVALID_LINESEARCH;
+        }
+    } else {
+        switch (param.linesearch) {
+        case LBFGS_LINESEARCH_MORETHUENTE:
+            linesearch = line_search_morethuente;
+            break;
+        case LBFGS_LINESEARCH_BACKTRACKING:
+        case LBFGS_LINESEARCH_BACKTRACKING_STRONG:
+            linesearch = line_search_backtracking;
+            break;
+        default:
+            return LBFGSERR_INVALID_LINESEARCH;
+        }
     }
-    linesearch = line_search_backtracking_owlqn;
 
     /* Allocate working space. */
     xp = (lbfgsfloatval_t*)vecalloc(n * sizeof(lbfgsfloatval_t));
