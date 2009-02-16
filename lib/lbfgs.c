@@ -668,11 +668,9 @@ static int line_search_backtracking_owlqn(
         return LBFGSERR_INVALIDPARAMETERS;
     }
 
+    /* Choose the orthant for the new point. */
     for (i = 0;i < n;++i) {
-        wp[i] = xp[i];
-        if (wp[i] == 0.) {
-            wp[i] = -gp[i];
-        }
+        wp[i] = (xp[i] == 0.) ? -gp[i] : wp[i];
     }
 
     for (;;) {
@@ -1496,6 +1494,7 @@ static void owlqn_direction(
                 /* Take the left partial derivative. */
                 d[i] = -g[i] + c;
             } else {
+                /* The gradient is in the range of [-C, C]. */
                 d[i] = 0.;
             }
         }
