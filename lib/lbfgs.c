@@ -80,7 +80,7 @@ typedef unsigned int uint32_t;
 /* Use SSE2 optimization for 64bit double precision. */
 #include "arithmetic_sse_double.h"
 
-#elif	defined(USE_SSE) && defined(__SSE__) && LBFGS_FLOAT == 32
+#elif   defined(USE_SSE) && defined(__SSE__) && LBFGS_FLOAT == 32
 /* Use SSE optimization for 32bit float precision. */
 #include "arithmetic_sse_float.h"
 
@@ -112,8 +112,8 @@ typedef struct tag_iteration_data iteration_data_t;
 
 static const lbfgs_parameter_t _defparam = {
     6, 1e-5, 0, 1e-5,
-    0, LBFGS_LINESEARCH_DEFAULT, 100,
-    1e-20, 1e20, 0.1, 0.9, 1.0e-16,
+    0, LBFGS_LINESEARCH_DEFAULT, 40,
+    1e-20, 1e20, 1e-4, 0.9, 1.0e-16,
     0.0, 0, -1,
 };
 
@@ -595,10 +595,10 @@ int lbfgs(
          */
         if (param.orthantwise_c != 0.) {
             for (i = param.orthantwise_start;i < param.orthantwise_end;++i) {
-			    if (d[i] * pg[i] >= 0) {
-				    d[i] = 0;
-			    }
-		    }
+                if (d[i] * pg[i] >= 0) {
+                    d[i] = 0;
+                }
+            }
         }
 
         /*
