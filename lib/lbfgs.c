@@ -227,6 +227,15 @@ static void owlqn_direction(
     const int n
     );
 
+static void owlqn_pseudo_gradient(
+    lbfgsfloatval_t* pg,
+    const lbfgsfloatval_t* x,
+    const lbfgsfloatval_t* g,
+    const lbfgsfloatval_t c,
+    const int start,
+    const int n
+    );
+
 static lbfgsfloatval_t owlqn_direction_line(
     const lbfgsfloatval_t* x,
     const lbfgsfloatval_t* g,
@@ -290,7 +299,7 @@ int lbfgs(
     lbfgs_parameter_t param = (_param != NULL) ? (*_param) : _defparam;
     const int m = param.m;
 
-    lbfgsfloatval_t *xp = NULL, *g = NULL, *gp = NULL, *d = NULL, *w = NULL, *pf = NULL;
+    lbfgsfloatval_t *xp = NULL, *g = NULL, *gp = NULL, *pg = NULL, *d = NULL, *w = NULL, *pf = NULL;
     iteration_data_t *lm = NULL, *it = NULL;
     lbfgsfloatval_t ys, yy;
     lbfgsfloatval_t xnorm, gnorm, beta;
@@ -380,9 +389,10 @@ int lbfgs(
     xp = (lbfgsfloatval_t*)vecalloc(n * sizeof(lbfgsfloatval_t));
     g = (lbfgsfloatval_t*)vecalloc(n * sizeof(lbfgsfloatval_t));
     gp = (lbfgsfloatval_t*)vecalloc(n * sizeof(lbfgsfloatval_t));
+    pg = (lbfgsfloatval_t*)vecalloc(n * sizeof(lbfgsfloatval_t));
     d = (lbfgsfloatval_t*)vecalloc(n * sizeof(lbfgsfloatval_t));
     w = (lbfgsfloatval_t*)vecalloc(n * sizeof(lbfgsfloatval_t));
-    if (xp == NULL || g == NULL || gp == NULL || d == NULL || w == NULL) {
+    if (xp == NULL || g == NULL || gp == NULL || pg == NULL || d == NULL || w == NULL) {
         ret = LBFGSERR_OUTOFMEMORY;
         goto lbfgs_exit;
     }
@@ -418,6 +428,7 @@ int lbfgs(
         /* Compute the L1 norm of the variable and add it to the object value. */
         xnorm = owlqn_x1norm(x, param.orthantwise_start, param.orthantwise_end);
         fx += xnorm * param.orthantwise_c;
+        owlqn_pseudo_gradient(pg, x, g, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
     }
 
     /* Store the initial value of the objective function. */
@@ -432,7 +443,7 @@ int lbfgs(
     if (param.orthantwise_c == 0.) {
         vecncpy(d, g, n);
     } else {
-        owlqn_direction(d, x, g, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
+        vecncpy(d, pg, n);
     }
 
     /*
@@ -442,7 +453,7 @@ int lbfgs(
     if (param.orthantwise_c == 0.) {
         vec2norm(&gnorm, g, n);
     } else {
-        gnorm = owlqn_g2norm(x, g, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
+        vec2norm(&gnorm, pg, n);
     }
     if (xnorm < 1.0) xnorm = 1.0;
     if (gnorm / xnorm <= param.epsilon) {
@@ -463,7 +474,11 @@ int lbfgs(
         veccpy(gp, g, n);
 
         /* Search for an optimal step. */
-        ls = linesearch(n, x, &fx, g, d, &step, xp, gp, w, &cd, &param);
+        if (param.orthantwise_c == 0.) {
+            ls = linesearch(n, x, &fx, g, d, &step, xp, gp, w, &cd, &param);
+        } else {
+            ls = linesearch(n, x, &fx, g, d, &step, xp, pg, w, &cd, &param);
+        }
         if (ls < 0) {
             ret = ls;
             goto lbfgs_exit;
@@ -474,7 +489,7 @@ int lbfgs(
         if (param.orthantwise_c == 0.) {
             vec2norm(&gnorm, g, n);
         } else {
-            gnorm = owlqn_g2norm(x, g, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
+            vec2norm(&gnorm, pg, n);
         }
 
         /* Report the progress. */
@@ -560,8 +575,7 @@ int lbfgs(
             /* Compute the negative of gradients. */
             vecncpy(d, g, n);
         } else {
-            owlqn_direction(d, x, g, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
-            veccpy(w, d, n);
+            vecncpy(d, pg, n);
         }
 
         j = end;
@@ -588,17 +602,6 @@ int lbfgs(
         }
 
         /*
-            Constrain the search direction for orthant-wise updates.
-         */
-        if (param.orthantwise_c != 0.) {
-            for (i = param.orthantwise_start;i < param.orthantwise_end;++i) {
-                if (d[i] * w[i] <= 0) {
-                    d[i] = 0;
-                }
-            }
-        }
-
-        /*
             Now the search direction d is ready. We try step = 1 first.
          */
         step = 1.0;
@@ -622,6 +625,7 @@ lbfgs_exit:
     }
     vecfree(w);
     vecfree(d);
+    vecfree(pg);
     vecfree(gp);
     vecfree(g);
     vecfree(xp);
@@ -1487,6 +1491,45 @@ static void owlqn_direction(
         }
     }
 }
+
+static void owlqn_pseudo_gradient(
+    lbfgsfloatval_t* pg,
+    const lbfgsfloatval_t* x,
+    const lbfgsfloatval_t* g,
+    const lbfgsfloatval_t c,
+    const int start,
+    const int n
+    )
+{
+    int i;
+
+    /* Compute the negative of gradients. */
+    for (i = 0;i < start;++i) {
+        pg[i] = g[i];
+    }
+
+    /* Compute the negative of psuedo-gradients. */
+    for (i = start;i < n;++i) {
+        if (x[i] < 0.) {
+            /* Differentiable. */
+            pg[i] = g[i] - c;
+        } else if (0. < x[i]) {
+            /* Differentiable. */
+            pg[i] = g[i] + c;
+        } else {
+            if (g[i] < -c) {
+                /* Take the right partial derivative. */
+                pg[i] = g[i] + c;
+            } else if (c < g[i]) {
+                /* Take the left partial derivative. */
+                pg[i] = g[i] - c;
+            } else {
+                pg[i] = 0.;
+            }
+        }
+    }
+}
+
 
 static lbfgsfloatval_t owlqn_direction_line(
     const lbfgsfloatval_t* x,
