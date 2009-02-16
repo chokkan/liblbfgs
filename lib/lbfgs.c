@@ -561,6 +561,7 @@ int lbfgs(
             vecncpy(d, g, n);
         } else {
             owlqn_direction(d, x, g, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
+            veccpy(w, d, n);
         }
 
         j = end;
@@ -584,6 +585,17 @@ int lbfgs(
             /* \gamma_{i+1} = \gamma_{i} + (\alpha_{j} - \beta_{j}) s_{j}. */
             vecadd(d, it->s, it->alpha - beta, n);
             j = (j + 1) % m;        /* if (++j == m) j = 0; */
+        }
+
+        /*
+            Constrain the search direction for orthant-wise updates.
+         */
+        if (param.orthantwise_c != 0.) {
+            for (i = param.orthantwise_start;i < param.orthantwise_end;++i) {
+                if (d[i] * w[i] <= 0) {
+                    d[i] = 0;
+                }
+            }
         }
 
         /*
