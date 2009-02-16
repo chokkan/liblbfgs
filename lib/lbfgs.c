@@ -231,9 +231,10 @@ static void owlqn_pseudo_gradient(
     lbfgsfloatval_t* pg,
     const lbfgsfloatval_t* x,
     const lbfgsfloatval_t* g,
+    const int n,
     const lbfgsfloatval_t c,
     const int start,
-    const int n
+    const int end
     );
 
 static lbfgsfloatval_t owlqn_direction_line(
@@ -428,7 +429,7 @@ int lbfgs(
         /* Compute the L1 norm of the variable and add it to the object value. */
         xnorm = owlqn_x1norm(x, param.orthantwise_start, param.orthantwise_end);
         fx += xnorm * param.orthantwise_c;
-        owlqn_pseudo_gradient(pg, x, g, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
+        owlqn_pseudo_gradient(pg, x, g, n, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
     }
 
     /* Store the initial value of the objective function. */
@@ -478,6 +479,7 @@ int lbfgs(
             ls = linesearch(n, x, &fx, g, d, &step, xp, gp, w, &cd, &param);
         } else {
             ls = linesearch(n, x, &fx, g, d, &step, xp, pg, w, &cd, &param);
+            owlqn_pseudo_gradient(pg, x, g, n, param.orthantwise_c, param.orthantwise_start, param.orthantwise_end);
         }
         if (ls < 0) {
             ret = ls;
@@ -1496,9 +1498,10 @@ static void owlqn_pseudo_gradient(
     lbfgsfloatval_t* pg,
     const lbfgsfloatval_t* x,
     const lbfgsfloatval_t* g,
+    const int n,
     const lbfgsfloatval_t c,
     const int start,
-    const int n
+    const int end
     )
 {
     int i;
@@ -1508,8 +1511,8 @@ static void owlqn_pseudo_gradient(
         pg[i] = g[i];
     }
 
-    /* Compute the negative of psuedo-gradients. */
-    for (i = start;i < n;++i) {
+    /* Compute the psuedo-gradients. */
+    for (i = start;i < end;++i) {
         if (x[i] < 0.) {
             /* Differentiable. */
             pg[i] = g[i] - c;
@@ -1527,6 +1530,10 @@ static void owlqn_pseudo_gradient(
                 pg[i] = 0.;
             }
         }
+    }
+
+    for (i = end;i < n;++i) {
+        pg[i] = g[i];
     }
 }
 
