@@ -153,9 +153,9 @@ enum {
     /** MoreThuente method proposd by More and Thuente. */
     LBFGS_LINESEARCH_MORETHUENTE = 0,
     /** Backtracking method with strong Wolfe condition. */
-    LBFGS_LINESEARCH_BACKTRACKING,
+    LBFGS_LINESEARCH_BACKTRACKING_STRONG,
     /** Backtracking method with regular Wolfe condition. */
-    LBFGS_LINESEARCH_BACKTRACKING_LOOSE,
+    LBFGS_LINESEARCH_BACKTRACKING,
 };
 
 /**
@@ -538,9 +538,9 @@ libLBFGS is distributed under the term of the
 - Version 1.6 (2008-11-02):
     - Improved line-search algorithm with strong Wolfe condition, which was
       contributed by Takashi Imamichi. This routine is now default for
-      ::LBFGS_LINESEARCH_BACKTRACKING. The previous line search algorithm
+      ::LBFGS_LINESEARCH_BACKTRACKING_STRONG. The previous line search algorithm
       with regular Wolfe condition is still available as
-      ::LBFGS_LINESEARCH_BACKTRACKING_LOOSE.
+      ::LBFGS_LINESEARCH_BACKTRACKING.
     - Configurable stop index for L1-norm computation. A member variable
       ::lbfgs_parameter_t::orthantwise_end was added to specify the index
       number at which the library stops computing the L1 norm of the
@@ -563,7 +563,7 @@ libLBFGS is distributed under the term of the
     - Configurable line search algorithms. A member variable
       ::lbfgs_parameter_t::linesearch was added to choose either MoreThuente
       method (::LBFGS_LINESEARCH_MORETHUENTE) or backtracking algorithm
-      (::LBFGS_LINESEARCH_BACKTRACKING).
+      (::LBFGS_LINESEARCH_BACKTRACKING_STRONG).
     - Fixed a bug: the previous version did not compute psuedo-gradients
       properly in the line search routines for OWL-QN. This bug might quit
       an iteration process too early when the OWL-QN routine was activated

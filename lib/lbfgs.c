@@ -362,9 +362,7 @@ int lbfgs(
         linesearch = line_search_morethuente;
         break;
     case LBFGS_LINESEARCH_BACKTRACKING:
-        linesearch = line_search_backtracking;
-        break;
-    case LBFGS_LINESEARCH_BACKTRACKING_LOOSE:
+    case LBFGS_LINESEARCH_BACKTRACKING_STRONG:
         linesearch = line_search_backtracking;
         break;
     default:
@@ -756,7 +754,7 @@ static int line_search_backtracking(
         if (*f <= finit + *stp * dgtest) {
             /* The sufficient decrease condition. */
 
-            if (param->linesearch == LBFGS_LINESEARCH_BACKTRACKING) {
+            if (param->linesearch == LBFGS_LINESEARCH_BACKTRACKING_STRONG) {
                 /* Check the strong Wolfe condition. */
                 vecdot(&dg, g, s, n);
                 if (dg > -wolfe * dginit) {
