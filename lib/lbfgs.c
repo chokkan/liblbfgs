@@ -643,7 +643,7 @@ static int line_search_backtracking_owlqn(
 
     /* Choose the orthant for the new point. */
     for (i = 0;i < n;++i) {
-        wp[i] = (xp[i] == 0.) ? -gp[i] : wp[i];
+        wp[i] = (xp[i] == 0.) ? -gp[i] : xp[i];
     }
 
     for (;;) {
@@ -823,9 +823,6 @@ static int line_search_morethuente(
     width = param->max_step - param->min_step;
     prev_width = 2.0 * width;
 
-    /* Copy the value of x to the work area. */
-    veccpy(wa, x, n);
-
     /*
         The variables stx, fx, dgx contain the values of the step,
         function, and directional derivative at the best step.
@@ -868,7 +865,7 @@ static int line_search_morethuente(
             Compute the current value of x:
                 x <- x + (*stp) * s.
          */
-        veccpy(x, wa, n);
+        veccpy(x, xp, n);
         vecadd(x, s, *stp, n);
 
         /* Evaluate the function and gradient values. */
@@ -1262,6 +1259,9 @@ static int update_trial_interval(
     *t = newt;
     return 0;
 }
+
+
+
 
 
 static lbfgsfloatval_t owlqn_x1norm(
