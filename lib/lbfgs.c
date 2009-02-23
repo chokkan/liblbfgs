@@ -213,6 +213,15 @@ static void owlqn_project(
     const int end
     );
 
+static lbfgsfloatval_t owlqn_direction_line(
+    const lbfgsfloatval_t* x,
+    const lbfgsfloatval_t* g,
+    const lbfgsfloatval_t* s,
+    const lbfgsfloatval_t c,
+    const int start,
+    const int n
+    );
+
 
 #if     defined(USE_SSE) && (defined(__SSE__) || defined(__SSE2__))
 static int round_out_variables(int n)
@@ -333,27 +342,17 @@ int lbfgs(
     if (n < param.orthantwise_end) {
         return LBFGSERR_INVALID_ORTHANTWISE_END;
     }
-    if (param.orthantwise_c != 0.) {
-        switch (param.linesearch) {
-        case LBFGS_LINESEARCH_BACKTRACKING:
-            linesearch = line_search_backtracking_owlqn;
-            break;
-        default:
-            /* Only the backtracking method is available. */
-            return LBFGSERR_INVALID_LINESEARCH;
-        }
-    } else {
-        switch (param.linesearch) {
-        case LBFGS_LINESEARCH_MORETHUENTE:
-            linesearch = line_search_morethuente;
-            break;
-        case LBFGS_LINESEARCH_BACKTRACKING:
-        case LBFGS_LINESEARCH_BACKTRACKING_STRONG:
-            linesearch = line_search_backtracking;
-            break;
-        default:
-            return LBFGSERR_INVALID_LINESEARCH;
-        }
+
+    switch (param.linesearch) {
+    case LBFGS_LINESEARCH_MORETHUENTE:
+        linesearch = line_search_morethuente;
+        break;
+    case LBFGS_LINESEARCH_BACKTRACKING:
+    case LBFGS_LINESEARCH_BACKTRACKING_STRONG:
+        linesearch = line_search_backtracking;
+        break;
+    default:
+        return LBFGSERR_INVALID_LINESEARCH;
     }
 
     /* Allocate working space. */
@@ -804,12 +803,12 @@ static int line_search_morethuente(
     lbfgsfloatval_t *stp,
     const lbfgsfloatval_t* xp,
     const lbfgsfloatval_t* gp,
-    lbfgsfloatval_t *wa,
+    lbfgsfloatval_t *wp,
     callback_data_t *cd,
     const lbfgs_parameter_t *param
     )
 {
-    int count = 0;
+    int i, count = 0;
     int brackt, stage1, uinfo = 0;
     lbfgsfloatval_t dg;
     lbfgsfloatval_t stx, fx, dgx;
@@ -822,6 +821,11 @@ static int line_search_morethuente(
     /* Check the input parameters for errors. */
     if (*stp <= 0.) {
         return LBFGSERR_INVALIDPARAMETERS;
+    }
+
+    /* Choose the orthant for the new point. */
+    for (i = 0;i < n;++i) {
+        wp[i] = (xp[i] == 0.) ? -gp[i] : xp[i];
     }
 
     /* Compute the initial gradient in the search direction. */
@@ -885,9 +889,14 @@ static int line_search_morethuente(
         veccpy(x, xp, n);
         vecadd(x, s, *stp, n);
 
+        /* The current point is projected onto the orthant. */
+        owlqn_project(x, wp, param->orthantwise_start, param->orthantwise_end);
+
         /* Evaluate the function and gradient values. */
         *f = cd->proc_evaluate(cd->instance, x, g, cd->n, *stp);
-        vecdot(&dg, g, s, n);
+        *f += param->orthantwise_c * owlqn_x1norm(x, param->orthantwise_start, param->orthantwise_end);
+//        vecdot(&dg, g, s, n);
+        dg = owlqn_direction_line(x, g, s, param->orthantwise_c, param->orthantwise_start, param->orthantwise_end);
 
         ftest1 = finit + *stp * dgtest;
         ++count;
@@ -1354,4 +1363,48 @@ static void owlqn_project(
             d[i] = 0;
         }
     }
+}
+
+static lbfgsfloatval_t owlqn_direction_line(
+    const lbfgsfloatval_t* x,
+    const lbfgsfloatval_t* g,
+    const lbfgsfloatval_t* s,
+    const lbfgsfloatval_t c,
+    const int start,
+    const int n
+    )
+{
+    int i;
+    lbfgsfloatval_t d = 0.;
+
+    /* Compute the negative of gradients. */
+    for (i = 0;i < start;++i) {
+        d += s[i] * g[i];
+    }
+
+    /* Use psuedo-gradients for orthant-wise updates. */
+    for (i = start;i < n;++i) {
+        /* Notice that:
+            (-s[i] < 0)  <==>  (g[i] < -param->orthantwise_c)
+            (-s[i] > 0)  <==>  (param->orthantwise_c < g[i])
+           as the result of the lbfgs() function for orthant-wise updates.
+         */
+        if (s[i] != 0.) {
+            if (x[i] < 0.) {
+                /* Differentiable. */
+                d += s[i] * (g[i] - c);
+            } else if (0. < x[i]) {
+                /* Differentiable. */
+                d += s[i] * (g[i] + c);
+            } else if (s[i] < 0.) {
+                /* Take the left partial derivative. */
+                d += s[i] * (g[i] - c);
+            } else if (0. < s[i]) {
+                /* Take the right partial derivative. */
+                d += s[i] * (g[i] + c);
+            }
+        }
+    }
+
+    return d;
 }
