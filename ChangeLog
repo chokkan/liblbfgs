@@ -1,3 +1,35 @@
+2009-02-28  Naoaki Okazaki  <okazaki at chokkan org>
+
+	* libLBFGS 1.7:
+	- Improved OWL-QN routines for stability.
+	- Removed the support of OWL-QN method in MoreThuente algorithm
+	  because it accidentally fails in early stages of iterations for some
+	  objectives. Because of this change, the OW-LQN method must be used
+	  with the backtracking algorithm (LBFGS_LINESEARCH_BACKTRACKING), or
+	  the library returns LBFGSERR_INVALID_LINESEARCH.
+	- Renamed line search algorithms as follows:
+	    - LBFGS_LINESEARCH_BACKTRACKING: regular Wolfe condition.
+	    - LBFGS_LINESEARCH_BACKTRACKING_LOOSE: regular Wolfe condition.
+	    - LBFGS_LINESEARCH_BACKTRACKING_STRONG: strong Wolfe condition.
+	- Source code clean-up.
+
+
+2008-11-02  Naoaki Okazaki  <okazaki at chokkan org>
+
+	* libLBFGS 1.6:
+	- Improved line-search algorithm with strong Wolfe condition, which
+	  was contributed by Takashi Imamichi. This routine is now default for
+	  LBFGS_LINESEARCH_BACKTRACKING. The previous line search algorithm
+	  with regular Wolfe condition is still available as
+	  LBFGS_LINESEARCH_BACKTRACKING_LOOSE.
+	- Configurable stop index for L1-norm computation. A member variable
+	  lbfgs_parameter_t::orthantwise_end was added to specify the index
+	  number at which the library stops computing the L1 norm of the
+	  variables. This is useful to prevent some variables from being
+	  regularized by the OW-LQN method.
+	- A sample program written in C++ (sample/sample.cpp).
+
+
 2008-07-10  Naoaki Okazaki  <okazaki at chokkan org>
 
 	* libLBFGS 1.5:

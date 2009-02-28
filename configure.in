@@ -18,7 +18,7 @@ AC_CONFIG_SRCDIR([lib/lbfgs.c])
 dnl ------------------------------------------------------------------
 dnl Initialization for automake
 dnl ------------------------------------------------------------------
-AM_INIT_AUTOMAKE(liblbfgs, 1.6)
+AM_INIT_AUTOMAKE(liblbfgs, 1.7)
 AC_CONFIG_HEADERS(config.h)
 AM_MAINTAINER_MODE
 
