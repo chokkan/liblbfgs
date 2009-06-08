@@ -347,8 +347,9 @@ int lbfgs(
         case LBFGS_LINESEARCH_MORETHUENTE:
             linesearch = line_search_morethuente;
             break;
-        case LBFGS_LINESEARCH_BACKTRACKING:
-        case LBFGS_LINESEARCH_BACKTRACKING_STRONG:
+        case LBFGS_LINESEARCH_BACKTRACKING_ARMIJO:
+        case LBFGS_LINESEARCH_BACKTRACKING_WOLFE:
+        case LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE:
             linesearch = line_search_backtracking;
             break;
         default:
@@ -680,26 +681,33 @@ static int line_search_backtracking(
 
         ++count;
 
-        if (*f <= finit + *stp * dgtest) {
-            /* The sufficient decrease condition. */
-
-            if (param->linesearch == LBFGS_LINESEARCH_BACKTRACKING_STRONG) {
-                /* Check the strong Wolfe condition. */
-                vecdot(&dg, g, s, n);
-                if (dg > -wolfe * dginit) {
-                    width = dec;
-                } else if (dg < wolfe * dginit) {
-                    width = inc;
-                } else {
-                    /* Strong Wolfe condition. */
-                    return count;
-                }
-            } else {
-                /* Exit with the loose Wolfe condition. */
-                return count;
-            }
-        } else {
+        if (*f > finit + *stp * dgtest) {
             width = dec;
+        } else {
+            /* The sufficient decrease condition (Armijo condition). */
+            if (param->linesearch == LBFGS_LINESEARCH_BACKTRACKING_ARMIJO) {
+                /* Exit with the Armijo condition. */
+                return count;
+	        }
+
+	        /* Check the Wolfe condition. */
+	        vecdot(&dg, g, s, n);
+	        if (dg < wolfe * dginit) {
+    		    width = inc;
+	        } else {
+		        if(param->linesearch == LBFGS_LINESEARCH_BACKTRACKING_WOLFE) {
+		            /* Exit with the regular Wolfe condition. */
+		            return count;
+		        }
+
+		        /* Check the strong Wolfe condition. */
+		        if(dg > -wolfe * dginit) {
+		            width = dec;
+		        } else {
+		            /* Exit with the strong Wolfe condition. */
+		            return count;
+		        }
+            }
         }
 
         if (*stp < param->min_step) {

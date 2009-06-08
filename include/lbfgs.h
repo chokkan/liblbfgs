@@ -153,11 +153,12 @@ enum {
     /** MoreThuente method proposd by More and Thuente. */
     LBFGS_LINESEARCH_MORETHUENTE = 0,
     /** Backtracking method with strong Wolfe condition. */
-    LBFGS_LINESEARCH_BACKTRACKING_STRONG = 1,
+    LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE = 1,
     /** Backtracking method with regular Wolfe condition. */
     LBFGS_LINESEARCH_BACKTRACKING = 2,
-    /** Backtracking method with regular Wolfe condition. */
-    LBFGS_LINESEARCH_BACKTRACKING_LOOSE = 2,
+    LBFGS_LINESEARCH_BACKTRACKING_WOLFE = 2,
+    /** Backtracking method with Armijo condition. */
+    LBFGS_LINESEARCH_BACKTRACKING_ARMIJO = 3,
 };
 
 /**
