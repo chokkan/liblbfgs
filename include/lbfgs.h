@@ -710,8 +710,10 @@ method presented in:
       In <i>Proceedings of the 24th International Conference on Machine
       Learning (ICML 2007)</i>, pp. 33-40, 2007.
 
-Special thanks go to Yoshimasa Tsuruoka and Daisuke Okanohara for technical
-information about OWL-QN.
+Special thanks go to:
+    - Yoshimasa Tsuruoka and Daisuke Okanohara for technical information about
+      OWL-QN
+    - Takashi Imamichi for the useful enhancements of the backtracking method
 
 Finally I would like to thank the original author, Jorge Nocedal, who has been
 distributing the effieicnt and explanatory implementation in an open source
