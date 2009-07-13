@@ -113,7 +113,7 @@ typedef struct tag_iteration_data iteration_data_t;
 static const lbfgs_parameter_t _defparam = {
     6, 1e-5, 0, 1e-5,
     0, LBFGS_LINESEARCH_DEFAULT, 40,
-    1e-20, 1e20, 1e-4, 0.9, 1.0e-16,
+    1e-20, 1e20, 1e-4, 0.9, 0.9, 1.0e-16,
     0.0, 0, -1,
 };
 
@@ -311,6 +311,12 @@ int lbfgs(
     }
     if (param.ftol < 0.) {
         return LBFGSERR_INVALID_FTOL;
+    }
+    if (param.linesearch == LBFGS_LINESEARCH_BACKTRACKING_WOLFE &&
+        param.linesearch == LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE) {
+        if (param.wolfe <= param.ftol || 1. <= param.wolfe) {
+            return LBFGSERR_INVALID_WOLFE;
+        }
     }
     if (param.gtol < 0.) {
         return LBFGSERR_INVALID_GTOL;
@@ -653,7 +659,7 @@ static int line_search_backtracking(
     int ret = 0, count = 0;
     lbfgsfloatval_t width, dg, norm = 0.;
     lbfgsfloatval_t finit, dginit = 0., dgtest;
-    const lbfgsfloatval_t wolfe = 0.9, dec = 0.5, inc = 2.1;
+    const lbfgsfloatval_t dec = 0.5, inc = 2.1;
 
     /* Check the input parameters for errors. */
     if (*stp <= 0.) {
@@ -692,7 +698,7 @@ static int line_search_backtracking(
 
 	        /* Check the Wolfe condition. */
 	        vecdot(&dg, g, s, n);
-	        if (dg < wolfe * dginit) {
+	        if (dg < param->wolfe * dginit) {
     		    width = inc;
 	        } else {
 		        if(param->linesearch == LBFGS_LINESEARCH_BACKTRACKING_WOLFE) {
@@ -701,7 +707,7 @@ static int line_search_backtracking(
 		        }
 
 		        /* Check the strong Wolfe condition. */
-		        if(dg > -wolfe * dginit) {
+		        if(dg > -param->wolfe * dginit) {
 		            width = dec;
 		        } else {
 		            /* Exit with the strong Wolfe condition. */
