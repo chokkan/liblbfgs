@@ -155,21 +155,24 @@ enum {
     /** MoreThuente method proposd by More and Thuente. */
     LBFGS_LINESEARCH_MORETHUENTE = 0,
     /**
-     * Backtracking method with the Armijo condition:
+     * Backtracking method with the Armijo condition.
      *  The backtracking method finds the step length such that it satisfies
      *  the sufficient decrease (Armijo) condition,
-     *      f(x + a * d) <= f(x) + lbfgs_parameter_t::ftol * a * g(x) \cdot d,
+     *    - f(x + a * d) <= f(x) + lbfgs_parameter_t::ftol * a * g(x)^T d,
+     *
      *  where x is the current point, d is the current search direction, and
      *  a is the step length.
      */
     LBFGS_LINESEARCH_BACKTRACKING_ARMIJO = 1,
-    LBFGS_LINESEARCH_BACKTRACKING = 1,
+    /** The backtracking method with the defualt (regular Wolfe) condition. */
+    LBFGS_LINESEARCH_BACKTRACKING = 2,
     /**
      * Backtracking method with regular Wolfe condition.
      *  The backtracking method finds the step length such that it satisfies
      *  both the Armijo condition (LBFGS_LINESEARCH_BACKTRACKING_ARMIJO)
      *  and the curvature condition,
-     *      g(x + a * d) \cdot d >= lbfgs_parameter_t::wolfe * g(x) \cdot d,
+     *    - g(x + a * d)^T d >= lbfgs_parameter_t::wolfe * g(x)^T d,
+     *
      *  where x is the current point, d is the current search direction, and
      *  a is the step length.
      */
@@ -179,7 +182,8 @@ enum {
      *  The backtracking method finds the step length such that it satisfies
      *  both the Armijo condition (LBFGS_LINESEARCH_BACKTRACKING_ARMIJO)
      *  and the following condition,
-     *      |g(x + a * d) \cdot d| <= lbfgs_parameter_t::wolfe * |g(x) \cdot d|,
+     *    - |g(x + a * d)^T d| <= lbfgs_parameter_t::wolfe * |g(x)^T d|,
+     *
      *  where x is the current point, d is the current search direction, and
      *  a is the step length.
      */
@@ -587,21 +591,22 @@ This library is used by:
 
 @section download Download
 
-- <a href="http://www.chokkan.org/software/dist/liblbfgs-1.7.tar.gz">Source code</a>
+- <a href="http://www.chokkan.org/software/dist/liblbfgs-1.8.tar.gz">Source code</a>
 
 libLBFGS is distributed under the term of the
 <a href="http://opensource.org/licenses/mit-license.php">MIT license</a>.
 
 @section changelog History
 - Version 1.8 (2009-07-13):
-    - The backtracking method now has three criteria for choosing the step
+    - Accepted the patch submitted by Takashi Imamichi;
+      the backtracking method now has three criteria for choosing the step
       length:
-        - ::LBFGS_LINESEARCH_BACKTRACKING_ARMIJO: sufficient decrease condition
-          (Armijo condition)
+        - ::LBFGS_LINESEARCH_BACKTRACKING_ARMIJO: sufficient decrease (Armijo)
+          condition only
         - ::LBFGS_LINESEARCH_BACKTRACKING_WOLFE: regular Wolfe condition
           (sufficient decrease condition + curvature condition)
         - ::LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE: strong Wolfe condition
-      This is based on the patch submitted by Takashi Imamichi.
+    - Updated the documentation to explain the above three criteria.
 - Version 1.7 (2009-02-28):
     - Improved OWL-QN routines for stability.
     - Removed the support of OWL-QN method in MoreThuente algorithm because

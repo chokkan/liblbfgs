@@ -1,3 +1,10 @@
+2009-07-13  Naoaki Okazaki  <okazaki at chokkan org>
+
+	* libLBFGS 1.8:
+	- Accepted the patch submitted by Takashi Imamichi; the backtracking method now has three criteria for choosing the step length.
+	- Updated the documentation to explain the above three criteria.
+
+
 2009-02-28  Naoaki Okazaki  <okazaki at chokkan org>
 
 	* libLBFGS 1.7:
