@@ -312,7 +312,7 @@ int lbfgs(
     if (param.ftol < 0.) {
         return LBFGSERR_INVALID_FTOL;
     }
-    if (param.linesearch == LBFGS_LINESEARCH_BACKTRACKING_WOLFE &&
+    if (param.linesearch == LBFGS_LINESEARCH_BACKTRACKING_WOLFE ||
         param.linesearch == LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE) {
         if (param.wolfe <= param.ftol || 1. <= param.wolfe) {
             return LBFGSERR_INVALID_WOLFE;
