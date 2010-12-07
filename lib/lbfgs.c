@@ -65,6 +65,7 @@ licence.
 #include <config.h>
 #endif/*HAVE_CONFIG_H*/
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -73,7 +74,6 @@ licence.
 
 #ifdef  _MSC_VER
 #define inline  __inline
-typedef unsigned int uint32_t;
 #endif/*_MSC_VER*/
 
 #if     defined(USE_SSE) && defined(__SSE2__) && LBFGS_FLOAT == 64
@@ -290,7 +290,7 @@ int lbfgs(
     if (n % 8 != 0) {
         return LBFGSERR_INVALID_N_SSE;
     }
-    if (((unsigned short)x & 0x000F) != 0) {
+    if ((uintptr_t)(const void*)x % 16 == 0) {
         return LBFGSERR_INVALID_X_SSE;
     }
 #endif/*defined(USE_SSE)*/
@@ -490,7 +490,7 @@ int lbfgs(
 
         /* Report the progress. */
         if (cd.proc_progress) {
-            if (ret = cd.proc_progress(cd.instance, x, g, fx, xnorm, gnorm, step, cd.n, k, ls)) {
+            if ((ret = cd.proc_progress(cd.instance, x, g, fx, xnorm, gnorm, step, cd.n, k, ls))) {
                 goto lbfgs_exit;
             }
         }

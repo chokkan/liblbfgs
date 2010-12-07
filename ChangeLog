@@ -2,6 +2,7 @@
 
 	* libLBFGS 1.10:
 	- Fixed compiling errors on Mac OS X; this patch was kindly submitted by Nic Schraudolph.
+	- Reduced compiling warnings on Mac OS X; this patch was kindly submitted by Tamas Nepusz.
 
 
 2010-01-29  Naoaki Okazaki  <okazaki at chokkan org>

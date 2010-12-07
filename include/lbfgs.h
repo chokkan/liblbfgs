@@ -601,6 +601,8 @@ libLBFGS is distributed under the term of the
 - Version 1.10 (2010-xx-xx):
     - Fixed compiling errors on Mac OS X; this patch was kindly submitted by
       Nic Schraudolph.
+    - Reduced compiling warnings on Mac OS X; this patch was kindly submitted
+      by Tamas Nepusz.
 - Version 1.9 (2010-01-29):
     - Fixed a mistake in checking the validity of the parameters "ftol" and
       "wolfe"; this was discovered by Kevin S. Van Horn.
@@ -721,7 +723,7 @@ Special thanks go to:
     - Yoshimasa Tsuruoka and Daisuke Okanohara for technical information about
       OWL-QN
     - Takashi Imamichi for the useful enhancements of the backtracking method
-    - Kevin S. Van Horn and Nic Schraudolph for bug fixes
+    - Kevin S. Van Horn, Nic Schraudolph, and Tamas Nepusz for bug fixes
 
 Finally I would like to thank the original author, Jorge Nocedal, who has been
 distributing the effieicnt and explanatory implementation in an open source
