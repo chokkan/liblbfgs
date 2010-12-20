@@ -656,8 +656,8 @@ static int line_search_backtracking(
     const lbfgs_parameter_t *param
     )
 {
-    int ret = 0, count = 0;
-    lbfgsfloatval_t width, dg, norm = 0.;
+    int count = 0;
+    lbfgsfloatval_t width, dg;
     lbfgsfloatval_t finit, dginit = 0., dgtest;
     const lbfgsfloatval_t dec = 0.5, inc = 2.1;
 
@@ -749,7 +749,7 @@ static int line_search_backtracking_owlqn(
     const lbfgs_parameter_t *param
     )
 {
-    int i, ret = 0, count = 0;
+    int i, count = 0;
     lbfgsfloatval_t width = 0.5, norm = 0.;
     lbfgsfloatval_t finit = *f, dgtest;
 

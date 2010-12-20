@@ -44,7 +44,7 @@ static int progress(
 
 #define N   100
 
-int main(int argc, char *argv)
+int main(int argc, char *argv[])
 {
     int i, ret = 0;
     lbfgsfloatval_t fx;
