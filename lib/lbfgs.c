@@ -290,7 +290,7 @@ int lbfgs(
     if (n % 8 != 0) {
         return LBFGSERR_INVALID_N_SSE;
     }
-    if ((uintptr_t)(const void*)x % 16 == 0) {
+    if ((uintptr_t)(const void*)x % 16 != 0) {
         return LBFGSERR_INVALID_X_SSE;
     }
 #endif/*defined(USE_SSE)*/
