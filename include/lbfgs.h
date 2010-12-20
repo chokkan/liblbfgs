@@ -592,7 +592,7 @@ This library is used by:
 
 @section download Download
 
-- <a href="http://www.chokkan.org/software/dist/liblbfgs-1.9.tar.gz">Source code</a>
+- <a href="https://github.com/downloads/chokkan/liblbfgs/liblbfgs-1.10.tar.gz">Source code</a>
 - <a href="https://github.com/chokkan/liblbfgs">GitHub repository</a>
 
 libLBFGS is distributed under the term of the
@@ -605,6 +605,7 @@ libLBFGS is distributed under the term of the
     - Reduced compiling warnings on Mac OS X; this patch was kindly submitted
       by Tamas Nepusz.
     - Replaced memalign() with posix_memalign().
+    - Updated solution and project files for Microsoft Visual Studio 2010.
 - Version 1.9 (2010-01-29):
     - Fixed a mistake in checking the validity of the parameters "ftol" and
       "wolfe"; this was discovered by Kevin S. Van Horn.
