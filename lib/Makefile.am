@@ -1,7 +1,7 @@
 # $Id$
 
 EXTRA_DIST = \
-	lib.vcproj
+	lib.vcxproj
 
 liblbfgsincludedir = $(includedir)
 liblbfgsinclude_HEADERS = \

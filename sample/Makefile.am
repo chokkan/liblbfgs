@@ -2,7 +2,7 @@
 
 EXTRA_DIST = \
 	sample.cpp \
-	sample.vcproj
+	sample.vcxproj
 
 noinst_PROGRAMS = sample
 
