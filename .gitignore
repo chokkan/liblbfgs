@@ -1,0 +1,69 @@
+## C
+
+# Object files
+*.o
+*.lo
+*.la
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+
+
+## Autotools
+
+# http://www.gnu.org/software/automake
+
+Makefile.in
+
+# http://www.gnu.org/software/autoconf
+
+/autom4te.cache
+/aclocal.m4
+/compile
+/configure
+/depcomp
+/install-sh
+/missing
+
+
+## vim
+
+.*.s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
+
+## liblbfgs-specific 
+INSTALL
+Makefile
+config.guess
+config.h
+config.h.in
+config.log
+config.status
+config.sub
+lib/.deps
+lib/.libs
+lib/Makefile
+libtool
+ltmain.sh
+sample/.deps
+sample/.libs
+sample/sample
+sample/Makefile
+stamp-h1
+
+
