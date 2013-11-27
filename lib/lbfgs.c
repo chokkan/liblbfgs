@@ -76,7 +76,12 @@ licence.
 #define inline  __inline
 #endif/*_MSC_VER*/
 
-#if     defined(USE_SSE) && defined(__SSE2__) && LBFGS_FLOAT == 64
+#if     defined(HAVE_LIBYEPPP)
+/* Use Yeppp! library for CPU-specific optimization. */
+#include <yepLibrary.h>
+#include "arithmetic_yeppp.h"
+
+#elif   defined(USE_SSE) && defined(__SSE2__) && LBFGS_FLOAT == 64
 /* Use SSE2 optimization for 64bit double precision. */
 #include "arithmetic_sse_double.h"
 
@@ -255,6 +260,9 @@ int lbfgs(
     int ret;
     int i, j, k, ls, end, bound;
     lbfgsfloatval_t step;
+#if defined(HAVE_LIBYEPPP)
+    enum YepStatus yepStatus = YepStatusOk;
+#endif
 
     /* Constant parameters and their default values. */
     lbfgs_parameter_t param = (_param != NULL) ? (*_param) : _defparam;
@@ -362,6 +370,11 @@ int lbfgs(
             return LBFGSERR_INVALID_LINESEARCH;
         }
     }
+
+#if defined(HAVE_LIBYEPPP)
+    /* Initialize Yeppp! library */
+    yepStatus = yepLibrary_Init();
+#endif
 
     /* Allocate working space. */
     xp = (lbfgsfloatval_t*)vecalloc(n * sizeof(lbfgsfloatval_t));
@@ -636,6 +649,12 @@ lbfgs_exit:
     vecfree(gp);
     vecfree(g);
     vecfree(xp);
+
+#if defined(HAVE_LIBYEPPP)
+    if (yepStatus == YepStatusOk) {
+        yepLibrary_Release();
+    }
+#endif
 
     return ret;
 }

@@ -87,10 +87,16 @@ AC_ARG_ENABLE(
 )
 
 dnl ------------------------------------------------------------------
+dnl Checks for Yeppp! support
+dnl ------------------------------------------------------------------
+AC_CHECK_HEADERS(yepLibrary.h yepCore.h yepMath.h,
+    [AC_CHECK_LIB(yeppp, yepLibrary_Init)])
+
+dnl ------------------------------------------------------------------
 dnl Checks for library functions.
 dnl ------------------------------------------------------------------
 AC_CHECK_LIB(m, fabs)
-
+AC_CHECK_HEADERS([sys/socket.h])
 
 
 dnl ------------------------------------------------------------------
