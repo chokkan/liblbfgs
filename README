@@ -1,4 +1,3 @@
-
            libLBFGS: C library of limited-memory BFGS (L-BFGS)
 
                                        Copyright (c) 1990, Jorge Nocedal
@@ -28,6 +27,7 @@ http://www.chokkan.org/software/liblbfgs/
 Open the solution file "lbfgs.sln" and build it.
 
 [GCC]
+$ ./autogen.sh
 $ ./configure
 $ make
 $ make install  # To install libLBFGS library and header.
