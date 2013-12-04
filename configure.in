@@ -70,8 +70,29 @@ AC_ARG_ENABLE(
     [AS_HELP_STRING(
         [--enable-profile],
         [build for profiling]
-	)],
+        )],
     [CFLAGS="-DPROFILE -pg ${CFLAGS}"]
+)
+
+dnl ------------------------------------------------------------------
+dnl Checks for Yeppp! support
+dnl ------------------------------------------------------------------
+AC_ARG_ENABLE(
+    yeppp,
+    [AC_HELP_STRING(
+        [--disable-yeppp],
+        [Do not use Yeppp! library for array operations],
+        )],
+    [],
+    [enable_yeppp=yes]
+)
+AS_IF(
+    [test "x$enable_yeppp" = "xyes"],
+    [AC_CHECK_HEADERS(
+        yepLibrary.h yepCore.h yepMath.h,
+        [AC_CHECK_LIB(yeppp, yepLibrary_Init)]
+    )],
+    []
 )
 
 dnl ------------------------------------------------------------------
@@ -85,12 +106,6 @@ AC_ARG_ENABLE(
         )],
     [CFLAGS="-msse2 -DUSE_SSE ${CFLAGS}"]
 )
-
-dnl ------------------------------------------------------------------
-dnl Checks for Yeppp! support
-dnl ------------------------------------------------------------------
-AC_CHECK_HEADERS(yepLibrary.h yepCore.h yepMath.h,
-    [AC_CHECK_LIB(yeppp, yepLibrary_Init)])
 
 dnl ------------------------------------------------------------------
 dnl Checks for library functions.
