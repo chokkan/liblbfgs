@@ -374,6 +374,10 @@ int lbfgs(
 #if defined(HAVE_LIBYEPPP)
     /* Initialize Yeppp! library */
     yepStatus = yepLibrary_Init();
+    if (yepStatus != YepStatusOk) {
+        ret = LBFGSERR_UNKNOWNERROR;
+        goto lbfgs_exit;
+    }
 #endif
 
     /* Allocate working space. */
