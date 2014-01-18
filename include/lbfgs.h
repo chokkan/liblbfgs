@@ -257,7 +257,7 @@ typedef struct {
     /**
      * The maximum number of trials for the line search.
      *  This parameter controls the number of function and gradients evaluations
-     *  per iteration for the line search routine. The default value is \c 20.
+     *  per iteration for the line search routine. The default value is \c 40.
      */
     int             max_linesearch;
 
