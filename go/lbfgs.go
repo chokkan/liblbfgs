@@ -1,28 +1,24 @@
-// Go wrapper for libLBFGS by Naoaki Okazaki, a C port of the
-// implementation of Limited-memory Broyden-Fletcher-Goldfarb-Shanno
-// (L-BFGS) method written by Jorge
-// Nocedal. [http://www.chokkan.org/software/liblbfgs]
-//
-// The L-BFGS method solves the unconstrainted minimization problem,
-//
-// minimize F(x), x = (x1, x2, ..., xN),
-//
-// only if the objective function F(x) and its gradient G(x) are
-// computable. The well-known Newton's method requires computation of
-// the inverse of the hessian matrix of the objective
-// function. However, the computational cost for the inverse hessian
-// matrix is expensive especially when the objective function takes a
-// large number of variables. The L-BFGS method iteratively finds a
-// minimizer by approximating the inverse hessian matrix by
-// information from last m iterations. This innovation saves the
-// memory storage and computational time drastically for large-scaled
-// problems.
-//
-// In addition to the benefits of the original libLBFGS library, this
-// package offers an idiomatic Go interface. It utilizes features such
-// as multiple return values, closure and first class functions in the
-// Go language to ease the use.
+/*
+Go wrapper for libLBFGS by Naoaki Okazaki, a C port of the
+implementation of Limited-memory Broyden-Fletcher-Goldfarb-Shanno
+(L-BFGS) method written by Jorge
+Nocedal. [http://www.chokkan.org/software/liblbfgs]
 
+The L-BFGS method solves the unconstrainted minimization problem,
+
+minimize F(x), x = (x1, x2, ..., xN),
+
+only if the objective function F(x) and its gradient G(x) are
+computable. The well-known Newton's method requires computation of
+the inverse of the hessian matrix of the objective
+function. However, the computational cost for the inverse hessian
+matrix is expensive especially when the objective function takes a
+large number of variables. The L-BFGS method iteratively finds a
+minimizer by approximating the inverse hessian matrix by
+information from last m iterations. This innovation saves the
+memory storage and computational time drastically for large-scaled
+problems.
+*/
 package lbfgs
 
 /*
