@@ -515,6 +515,13 @@ lbfgsfloatval_t* lbfgs_malloc(int n);
  */
 void lbfgs_free(lbfgsfloatval_t *x);
 
+/**
+ * Get string description of an lbfgs() return code.
+ *
+ *  @param err          A value returned by lbfgs().
+ */
+const char* lbfgs_strerror(int err);
+
 /** @} */
 
 #ifdef  __cplusplus
