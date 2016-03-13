@@ -26,6 +26,8 @@ AM_MAINTAINER_MODE
 dnl ------------------------------------------------------------------
 dnl Checks for program
 dnl ------------------------------------------------------------------
+AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_LIBTOOL
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -99,6 +101,17 @@ dnl ------------------------------------------------------------------
 AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(INCLUDES)
+
+dnl ------------------------------------------------------------------
+dnl googletest support
+dnl ------------------------------------------------------------------
+GTEST_CPPFLAGS="-I\$(top_srcdir)/googletest/googletest/include"
+GTEST_LIBS="-L\$(top_srcdir)/googletest/googlemock/gtest -lgtest_main -lgtest"
+GTEST_LDFLAGS=
+AC_CHECK_LIB(pthread, pthread_create, GTEST_LDFLAGS+=" -pthread", GTEST_CPPFLAGS+=" -DGTEST_HAS_PTHREAD=0")
+AC_SUBST([GTEST_CPPFLAGS])
+AC_SUBST([GTEST_LDFLAGS])
+AC_SUBST([GTEST_LIBS])
 
 dnl ------------------------------------------------------------------
 dnl Output the configure results.

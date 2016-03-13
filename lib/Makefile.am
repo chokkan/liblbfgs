@@ -20,5 +20,13 @@ liblbfgs_la_LDFLAGS = \
 	-no-undefined \
 	-release @VERSION@
 
+bin_PROGRAMS = lbfgstest
+TESTS = lbfgstest
+
+lbfgstest_SOURCES = lbfgs_unittests.cc
+lbfgstest_LDFLAGS = $(GTEST_LDFLAGS)
+lbfgstest_LDADD = liblbfgs.la $(GTEST_LIBS)
+lbfgstest_CPPFLAGS = -I./include $(GTEST_CPPFLAGS)
+
 AM_CFLAGS = @CFLAGS@
 INCLUDES = @INCLUDES@
