@@ -87,8 +87,6 @@ endif ()
 
 # ----------------------------------------------------------------------------
 # includes
-include(CheckIncludeFile)
-include(CMakePackageConfigHelpers)
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Subproject.cmake")
 
 # ----------------------------------------------------------------------------
@@ -112,6 +110,7 @@ set_cache_property(USE_IEEE754 ADVANCED TRUE)
 # ----------------------------------------------------------------------------
 # checks for SSE/SSE2 instructions header files
 if (USE_SSE)
+  include(CheckIncludeFile)
   if (USE_DOUBLE)
     check_include_file(emmintrin.h HAVE_EMMINTRIN_H)
     if (NOT HAVE_EMMINTRIN_H)
@@ -143,9 +142,9 @@ set(SOURCES
 add_library(liblbfgs ${HEADERS} ${SOURCES})
 
 set_target_properties(liblbfgs PROPERTIES
-  OUTPUT_NAME lbfgs
-  VERSION ${PROJECT_VERSION}
-  SOVERSION ${PROJECT_SOVERSION}
+  OUTPUT_NAME   lbfgs
+  VERSION       ${PROJECT_VERSION}
+  SOVERSION     ${PROJECT_SOVERSION}
   DEBUG_POSTFIX d
   POSITION_INDEPENDENT_CODE TRUE
 )
@@ -202,35 +201,41 @@ endif ()
 
 # ----------------------------------------------------------------------------
 # configuration
-if (${PROJECT_NAME}_INSTALL_CONFIG_DIR)
-  set(PROJECT_INSTALL_CONFIG_DIR "${${PROJECT_NAME}_INSTALL_CONFIG_DIR}")
-elseif (WIN32 AND NOT MINGW AND NOT CYGWIN)
-  set(PROJECT_INSTALL_CONFIG_DIR "cmake")
-else ()
-  set(PROJECT_INSTALL_CONFIG_DIR "lib/cmake/${PROJECT_NAME_LOWER}")
-endif ()
+if (NOT PROJECT_IS_SUBPROJECT OR NOT DEFINED ${PROJECT_NAME}_INSTALL_CONFIG OR ${PROJECT_NAME}_INSTALL_CONFIG)
 
-configure_package_config_file(
-  "${PROJECT_SOURCE_DIR}/cmake/Config.cmake.in"
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-  INSTALL_DESTINATION "${PROJECT_INSTALL_CONFIG_DIR}"
-  NO_SET_AND_CHECK_MACRO
-  NO_CHECK_REQUIRED_COMPONENTS_MACRO
-)
+  include(CMakePackageConfigHelpers)
 
-write_basic_package_version_file(
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-  VERSION       ${PROJECT_VERSION}
-  COMPATIBILITY AnyNewerVersion
-)
-
-install_package_config_files(
-  FILES
+  if (${PROJECT_NAME}_INSTALL_CONFIG_DIR)
+    set(PROJECT_INSTALL_CONFIG_DIR "${${PROJECT_NAME}_INSTALL_CONFIG_DIR}")
+  elseif (WIN32 AND NOT MINGW AND NOT CYGWIN)
+    set(PROJECT_INSTALL_CONFIG_DIR "cmake")
+  else ()
+    set(PROJECT_INSTALL_CONFIG_DIR "lib/cmake/${PROJECT_NAME_LOWER}")
+  endif ()
+ 
+  configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/cmake/Config.cmake.in"
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+    INSTALL_DESTINATION "${PROJECT_INSTALL_CONFIG_DIR}"
+    NO_SET_AND_CHECK_MACRO
+    NO_CHECK_REQUIRED_COMPONENTS_MACRO
+  )
+ 
+  write_basic_package_version_file(
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-  DESTINATION
-    "${PROJECT_INSTALL_CONFIG_DIR}"
-)
+    VERSION       ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+  )
+ 
+  install_package_config_files(
+    FILES
+      "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+      "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+    DESTINATION
+      "${PROJECT_INSTALL_CONFIG_DIR}"
+  )
+ 
+  export(TARGETS liblbfgs FILE "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
+  install_exports(DESTINATION "${PROJECT_INSTALL_CONFIG_DIR}")
 
-export(TARGETS liblbfgs FILE "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
-install_exports(DESTINATION "${PROJECT_INSTALL_CONFIG_DIR}")
+endif ()

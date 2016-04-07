@@ -59,7 +59,12 @@ macro (subproject name)
   unset(_SOVERSION)
   unset(_LANGUAGES)
   unset(_UNPARSED_ARGUMENTS)
-  set_property(GLOBAL PROPERTY ${PROJECT_NAME}_EXPORTS "")
+  if (${PROJECT_NAME}_EXPORT_NAME)
+    set(PROJECT_EXPORT_NAME ${${PROJECT_NAME}_EXPORT_NAME})
+  else ()
+    set(PROJECT_EXPORT_NAME ${PROJECT_NAME})
+  endif ()
+  set_property(GLOBAL PROPERTY ${PROJECT_NAME}_HAVE_EXPORT FALSE)
 endmacro ()
 
 # ----------------------------------------------------------------------------
@@ -219,65 +224,65 @@ function (install_library target)
   if (NOT TARGET ${target})
     message(FATAL_ERROR "Unknown target: ${target}")
   endif ()
-  cmake_parse_arguments(""
-    ""
-    "INCLUDE_DESTINATION;LIBRARY_DESTINATION;RUNTIME_DESTINATION"
-    "PUBLIC_HEADER_FILES"
-    ${ARGN}
-  )
-  if (_UNPARSED_ARGUMENTS)
-    message(FATAL_ERROR "Too many or unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
-  endif ()
-  # override (default) arguments
-  if (${PROJECT_NAME}_INSTALL_RUNTIME_DIR)
-    set(_RUNTIME_DESTINATION "${${PROJECT_NAME}_INSTALL_RUNTIME_DIR}")
-  elseif (NOT _RUNTIME_DESTINATION)
-    set(_RUNTIME_DESTINATION bin)
-  endif ()
-  if (${PROJECT_NAME}_INSTALL_INCLUDE_DIR)
-    set(_INCLUDE_DESTINATION "${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}")
-  elseif (NOT _INCLUDE_DESTINATION)
-    set(_INCLUDE_DESTINATION include)
-  endif ()
-  if (${PROJECT_NAME}_INSTALL_LIBRARY_DIR)
-    set(_LIBRARY_DESTINATION "${${PROJECT_NAME}_INSTALL_LIBRARY_DIR}")
-  elseif (NOT _LIBRARY_DESTINATION)
-    set(_LIBRARY_DESTINATION lib)
-  endif ()
-  # skip installation of static subproject library
   get_target_property(type ${target} TYPE)
   if (NOT PROJECT_IS_SUBPROJECT OR
       NOT "^${type}$" STREQUAL "^STATIC_LIBRARY$" OR
       ${PROJECT_NAME}_INSTALL_STATIC_LIBS)
+    cmake_parse_arguments(""
+      ""
+      "INCLUDE_DESTINATION;LIBRARY_DESTINATION;RUNTIME_DESTINATION"
+      "PUBLIC_HEADER_FILES"
+      ${ARGN}
+    )
+    if (_UNPARSED_ARGUMENTS)
+      message(FATAL_ERROR "Too many or unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
+    endif ()
+    # override (default) arguments
+    if (${PROJECT_NAME}_INSTALL_RUNTIME_DIR)
+      set(_RUNTIME_DESTINATION "${${PROJECT_NAME}_INSTALL_RUNTIME_DIR}")
+    elseif (NOT _RUNTIME_DESTINATION)
+      set(_RUNTIME_DESTINATION bin)
+    endif ()
+    if (${PROJECT_NAME}_INSTALL_INCLUDE_DIR)
+      set(_INCLUDE_DESTINATION "${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}")
+    elseif (NOT _INCLUDE_DESTINATION)
+      set(_INCLUDE_DESTINATION include)
+    endif ()
+    if (${PROJECT_NAME}_INSTALL_LIBRARY_DIR)
+      set(_LIBRARY_DESTINATION "${${PROJECT_NAME}_INSTALL_LIBRARY_DIR}")
+    elseif (NOT _LIBRARY_DESTINATION)
+      set(_LIBRARY_DESTINATION lib)
+    endif ()
+    # skip installation of static subproject library
     if (_PUBLIC_HEADER_FILES)
       install(FILES ${_PUBLIC_HEADER_FILES} DESTINATION ${_INCLUDE_DESTINATION} COMPONENT Development)
       target_include_directories(${target} INTERFACE "$<INSTALL_INTERFACE:${_INCLUDE_DESTINATION}>")
     endif ()
-    install(TARGETS ${target} EXPORT ${PROJECT_NAME}
+    install(TARGETS ${target} EXPORT ${PROJECT_EXPORT_NAME}
       RUNTIME DESTINATION ${_RUNTIME_DESTINATION} COMPONENT RuntimeLibraries
       LIBRARY DESTINATION ${_LIBRARY_DESTINATION} COMPONENT RuntimeLibraries
       ARCHIVE DESTINATION ${_LIBRARY_DESTINATION} COMPONENT Development
     )
-    set_property(GLOBAL PROPERTY ${PROJECT_NAME}_EXPORT_NAME ${PROJECT_NAME})
+    set_property(GLOBAL PROPERTY ${PROJECT_NAME}_HAVE_EXPORT TRUE)
   endif ()
 endfunction ()
 
 # ----------------------------------------------------------------------------
 ## Install package configuration files
 function (install_package_config_files)
-  # parse arguments
-  cmake_parse_arguments("" "" "DESTINATION" "FILES" ${ARGN})
-  if (_UNPARSED_ARGUMENTS)
-    message(FATAL_ERROR "Unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
-  endif ()
-  # override (default) arguments
-  if (${PROJECT_NAME}_INSTALL_CONFIG_DIR)
-    set(_DESTINATION "${${PROJECT_NAME}_INSTALL_CONFIG_DIR}")
-  elseif (NOT _DESTINATION)
-    set(_DESTINATION "lib/cmake/${PROJECT_NAME_LOWER}")
-  endif ()
-  # install package configuration files if not overriden
   if (NOT PROJECT_IS_SUBPROJECT OR NOT DEFINED ${PROJECT_NAME}_INSTALL_CONFIG OR ${PROJECT_NAME}_INSTALL_CONFIG)
+    # parse arguments
+    cmake_parse_arguments("" "" "DESTINATION" "FILES" ${ARGN})
+    if (_UNPARSED_ARGUMENTS)
+      message(FATAL_ERROR "Unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
+    endif ()
+    # override (default) arguments
+    if (${PROJECT_NAME}_INSTALL_CONFIG_DIR)
+      set(_DESTINATION "${${PROJECT_NAME}_INSTALL_CONFIG_DIR}")
+    elseif (NOT _DESTINATION)
+      set(_DESTINATION "lib/cmake/${PROJECT_NAME_LOWER}")
+    endif ()
+    # install package configuration files if not overriden
     install(FILES ${_FILES} DESTINATION ${_DESTINATION} COMPONENT Development)
   endif ()
 endfunction ()
@@ -285,24 +290,26 @@ endfunction ()
 # ----------------------------------------------------------------------------
 ## Install exported targets configuration files
 function (install_exports)
-  cmake_parse_arguments("" "" "DESTINATION;NAMESPACE" "" ${ARGN})
-  if (_UNPARSED_ARGUMENTS)
-    message(FATAL_ERROR "Unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
-  endif ()
-  # override (default) arguments
-  if (${PROJECT_NAME}_INSTALL_CONFIG_DIR)
-    set(_DESTINATION "${${PROJECT_NAME}_INSTALL_CONFIG_DIR}")
-  elseif (NOT _DESTINATION)
-    set(_DESTINATION "lib/cmake/${PROJECT_NAME_LOWER}")
-  endif ()
-  # install export sets
-  get_property(export_name GLOBAL PROPERTY ${PROJECT_NAME}_EXPORT_NAME)
-  if (export_name)
-    install(EXPORT ${export_name}
-      NAMESPACE   "${_NAMESPACE}"
-      DESTINATION "${_DESTINATION}"
-      FILE        "${PROJECT_NAME}Targets.cmake"
-      COMPONENT   Development
-    )
+  if (NOT PROJECT_IS_SUBPROJECT OR NOT DEFINED ${PROJECT_NAME}_INSTALL_CONFIG OR ${PROJECT_NAME}_INSTALL_CONFIG)
+    cmake_parse_arguments("" "" "DESTINATION;NAMESPACE" "" ${ARGN})
+    if (_UNPARSED_ARGUMENTS)
+      message(FATAL_ERROR "Unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
+    endif ()
+    # override (default) arguments
+    if (${PROJECT_NAME}_INSTALL_CONFIG_DIR)
+      set(_DESTINATION "${${PROJECT_NAME}_INSTALL_CONFIG_DIR}")
+    elseif (NOT _DESTINATION)
+      set(_DESTINATION "lib/cmake/${PROJECT_NAME_LOWER}")
+    endif ()
+    # install export sets
+    get_property(have_export GLOBAL PROPERTY ${PROJECT_NAME}_HAVE_EXPORT)
+    if (have_export)
+      install(EXPORT ${PROJECT_EXPORT_NAME}
+        NAMESPACE   "${_NAMESPACE}"
+        DESTINATION "${_DESTINATION}"
+        FILE        "${PROJECT_NAME}Targets.cmake"
+        COMPONENT   Development
+      )
+    endif ()
   endif ()
 endfunction ()
