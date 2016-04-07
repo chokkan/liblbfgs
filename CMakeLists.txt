@@ -88,11 +88,11 @@ endif ()
 # includes
 include(CheckIncludeFile)
 include(CMakePackageConfigHelpers)
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Commands.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Subproject.cmake")
 
 # ----------------------------------------------------------------------------
 # package
-project(LibLBFGS VERSION 1.10.0 LANGUAGES C)
+subproject(LibLBFGS VERSION 1.10.0 LANGUAGES C)
 
 set(PACKAGE_STRING    "${PROJECT_NAME} ${PROJECT_VERSION}")
 set(PACKAGE_TARNAME   "${PROJECT_NAME_LOWER}-${PROJECT_VERSION}")

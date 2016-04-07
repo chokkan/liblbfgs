@@ -6,15 +6,10 @@
 # Author: Andreas Schuh (andreas.schuh.84@gmail.com)
 # ==============================================================================
 
-if (__COMMANDS_INCLUDED)
-  return()
-endif ()
-set(__COMMANDS_INCLUDED TRUE)
-
 include(CMakeParseArguments)
 
 # ----------------------------------------------------------------------------
-## Start project
+## Start (sub-)project
 #
 # This macro is for CMake versions 2.8.12 which did not have the VERSION
 # argument yet. It additionally sets the PROJECT_SOVERSION to either the
@@ -25,10 +20,10 @@ include(CMakeParseArguments)
 #
 # Besides the PROJECT_NAME variable, this macro also sets PROJECT_NAME_LOWER
 # and PROJECT_NAME_UPPER to the respective all lower- or uppercase strings.
-macro (project name)
+macro (subproject name)
   cmake_parse_arguments("" "" "VERSION;SOVERSION" "LANGUAGES" ${ARGN})
   if (_UNPARSED_ARGUMENTS)
-    message(FATAL_ERROR "Unrecognized arguments: ${PROJECT_UNPARSED_ARGUMENTS}")
+    message(FATAL_ERROR "Unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
   endif ()
   if (NOT _VERSION)
     set(_VERSION 0.0.0) # invalid version number
@@ -41,7 +36,7 @@ macro (project name)
   unset(${name}_VERSION_MAJOR)
   unset(${name}_VERSION_MINOR)
   unset(${name}_VERSION_PATCH)
-  _project(${name} ${_LANGUAGES})
+  project(${name} ${_LANGUAGES})
   set(PROJECT_VERSION "${_VERSION}")
   split_version_numbers(${PROJECT_VERSION}
     PROJECT_VERSION_MAJOR
