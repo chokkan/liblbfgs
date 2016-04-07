@@ -13,16 +13,17 @@
 # ---------------------------------------
 #
 # This CMakeLists.txt defines some libLBFGS specific configuration variables
-# using the "liblbfgs_define" utility macro. The default values of these variables
-# can be overridden either on the CMake command-line using the -D option of
-# the cmake command or in a super-project which includes the libLBFGS source
-# tree by setting the LibLBFGS_<varname> CMake variables before adding the
-# libLBFGS source directory via CMake's "add_subdirectory" command. Only when
-# the non-cached variable LibLBFGS_IS_SUBPROJECT has a value equivalent to FALSE,
-# these configuration variables are added to the CMake cache so they can be
-# edited in the CMake GUI. By default, LibLBFGS_IS_SUBPROJECT is set to TRUE when
-# the CMAKE_SOURCE_DIR is not identical to the directory of this CMakeLists.txt
-# file, i.e., the top-level directory of the libLBFGS project source tree.
+# using a custom "define" command defined in the Subproject.cmake module.
+# The default values of these variables can be overridden either on the CMake
+# command-line using the -D option of the cmake command or in a super-project
+# which includes the libLBFGS source tree by setting the LibLBFGS_<varname>
+# CMake variables before adding the libLBFGS source directory via CMake's
+# add_subdirectory command. Only when the non-cached variable LibLBFGS_IS_SUBPROJECT
+# has a value equivalent to FALSE, these configuration variables are added to
+# the CMake cache so they can be edited in the CMake GUI. By default,
+# LibLBFGS_IS_SUBPROJECT is set to TRUE when the CMAKE_SOURCE_DIR is not identical
+# to the directory of this CMakeLists.txt  file, i.e., the top-level directory of
+# the libLBFGS project source tree.
 #
 # Example CMakeLists.txt of user project which requires separate libLBFGS
 # installation (possibly requires FindLibLBFGS.cmake module for distribution
