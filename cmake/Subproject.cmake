@@ -148,11 +148,14 @@ endmacro ()
 # ----------------------------------------------------------------------------
 ## Add configuration variable
 #
-# The default value of the (cached) configuration value can be overridden either
-# on the CMake command-line or the super-project by setting the
-# ${PROJECT_NAME}_${varname} variable. When this project is a subproject of
-# another project, i.e., ${PROJECT_NAME}_IS_SUBPROJECT is TRUE,
-# the variable is not added to the CMake cache. Otherwise it is cached.
+# The default value of the (cached) configuration value can be overridden
+# either on the CMake command-line or the super-project by setting the
+# ${PROJECT_NAME}_${varname} variable. When this project is a subproject
+# of another project, i.e., PROJECT_IS_SUBPROJECT is TRUE, the variable
+# is not added to the CMake cache and set to the value of
+# ${PROJECT_NAME}_${varname} regardless if the parent project defines
+# a (cached) variable of the same name. Otherwise, when this project is
+# a standalone project, the variable is cached.
 macro (define type varname docstring default)
   if (ARGC GREATER 5)
     message (FATAL_ERROR "Too many macro arguments")
@@ -168,9 +171,7 @@ macro (define type varname docstring default)
     endif ()
   endif ()
   if (PROJECT_IS_SUBPROJECT)
-    if (NOT DEFINED ${varname})
-      set(${varname} "${${PROJECT_NAME}_${varname}}")
-    endif ()
+    set(${varname} "${${PROJECT_NAME}_${varname}}")
   else ()
     set(${varname} "${${PROJECT_NAME}_${varname}}" CACHE ${type} "${docstring}")
   endif ()
