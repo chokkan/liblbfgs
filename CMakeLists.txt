@@ -68,9 +68,13 @@
 #                                   files are installed as well. The default is
 #                                   to not install static libraries when this
 #                                   project is a subproject of another project.
+#    LibLBFGS_INSTALL_CONFIG      - Whether to install CMake configuration files.
+#                                   By default, the CMake configuration files are
+#                                   installed when the library itself is installed.
 #    LibLBFGS_INSTALL_RUNTIME_DIR - Installation directory for runtime files. (default: bin)
 #    LibLBFGS_INSTALL_INCLUDE_DIR - Installation directory for public header files. (default: include)
 #    LibLBFGS_INSTALL_LIBRARY_DIR - Installation directory for library files. (default: lib)
+#    LibLBFGS_INSTALL_CONFIG_DIR  - Installation directory for CMake configuration. (default: lib/cmake/liblbfgs)
 
 # ----------------------------------------------------------------------------
 # CMake version and policies
