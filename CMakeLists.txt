@@ -1,13 +1,3 @@
-# ==============================================================================
-# libLBFGS: C library of limited-memory BFGS (L-BFGS)
-#
-# Copyright (c) 1990, Jorge Nocedal
-# Copyright (c) 2007-2010, Naoaki Okazaki
-#
-# libLBFGS is distributed under the term of the MIT license.
-# Please refer to COPYING file in the distribution.
-# ==============================================================================
-
 #.rst
 # CMake configuration of libLBFGS project
 # ---------------------------------------
@@ -33,10 +23,10 @@
 #
 #    project(Foo)
 #
-#    find_package(LibLBFGS REQUIRED)
+#    find_package(LBFGS REQUIRED)
 #
 #    add_executable(foo src/foo.cc)
-#    target_link_libraries(foo liblbfgs)
+#    target_link_libraries(foo LBFGS::lib)
 #
 # Example CMakeLists.txt of super-project which contains libLBFGS source tree::
 #
@@ -44,38 +34,56 @@
 #
 #    project(Foo)
 #
-#    set(LibLBFGS_USE_SSE ON)
+#    set(LBFGS_USE_SSE ON)
+#    set(LBFGS_lib_TARGET_NAME liblbfgs)
 #    add_subdirectory(lbfgs)
+#    set_target_properties(liblbfgs PROPERTIES OUTPUT_NAME foolbfgs)
 #
 #    add_executable(foo src/foo.cc)
 #    target_link_libraries(foo liblbfgs)
+#    # or use the always defined namespaced ALIAS target, i.e.,
+#    #target_link_libraries(foo LBFGS::lib)
 #
 # Variables to configure the source files::
 #
-#    LibLBFGS_USE_DOUBLE  - Enable double precision floating point arithmetics. (default: ON)
-#    LibLBFGS_USE_SSE     - Enable SSE/SSE2 optimiations. (default: OFF)
-#    LibLBFGS_USE_IEEE754 - Enable optimization routines for IEEE754 floating point values. (default: ON)
+#    LBFGS_USE_DOUBLE  - Enable double precision floating point arithmetics. (default: ON)
+#    LBFGS_USE_SSE     - Enable SSE/SSE2 optimiations. (default: OFF)
+#    LBFGS_USE_IEEE754 - Enable optimization routines for IEEE754 floating point values. (default: ON)
 #
 # Variables to configure the build::
 #
-#    LibLBFGS_BUILD_SHARED_LIBS - Enable build of shared libraries. (default: OFF)
-#    LibLBFGS_BUILD_EXAMPLES    - Enable build of example programs. (default: OFF)
+#    LBFGS_BUILD_SHARED_LIBS    - Enable build of shared libraries. (default: OFF)
+#    LBFGS_BUILD_EXAMPLES       - Enable build of example programs. (default: OFF)
+#    LBFGS_<target>_TARGET_NAME - Custom target name for target <target>, i.e., "lib" or "sample".
+#                                 By default, the target name is prefixed by "lbfgs_" if this project
+#                                 is configured as a subproject of another project.
+#    LBFGS_NO_ALIASES           - Do not add ALIAS targets LBFGS::lib and LBFGS::sample. (default: OFF)
 #
 # Variables to configure the installation::
 #
-#    LibLBFGS_INSTALL_STATIC_LIBS - Whether to install static library files.
-#                                   Shared libraries are always installed.
-#                                   When a library is installed, its public header
-#                                   files are installed as well. The default is
-#                                   to not install static libraries when this
-#                                   project is a subproject of another project.
-#    LibLBFGS_INSTALL_CONFIG      - Whether to install CMake configuration files.
-#                                   By default, the CMake configuration files are
-#                                   installed when the library itself is installed.
-#    LibLBFGS_INSTALL_RUNTIME_DIR - Installation directory for runtime files. (default: bin)
-#    LibLBFGS_INSTALL_INCLUDE_DIR - Installation directory for public header files. (default: include)
-#    LibLBFGS_INSTALL_LIBRARY_DIR - Installation directory for library files. (default: lib)
-#    LibLBFGS_INSTALL_CONFIG_DIR  - Installation directory for CMake configuration. (default: lib/cmake/liblbfgs)
+#    LBFGS_INSTALL_STATIC_LIBS - Whether to install static library files.
+#                                Shared libraries are always installed.
+#                                When a library is installed, its public header
+#                                files are installed as well. The default is
+#                                to not install static libraries when this
+#                                project is a subproject of another project.
+#    LBFGS_INSTALL_CONFIG      - Whether to install CMake configuration files.
+#                                By default, the CMake configuration files are
+#                                installed when the library itself is installed.
+#    LBFGS_INSTALL_RUNTIME_DIR - Installation directory for runtime files. (default: bin)
+#    LBFGS_INSTALL_INCLUDE_DIR - Installation directory for public header files. (default: include)
+#    LBFGS_INSTALL_LIBRARY_DIR - Installation directory for library files. (default: lib)
+#    LBFGS_INSTALL_CONFIG_DIR  - Installation directory for CMake configuration. (default: lib/cmake/liblbfgs)
+
+# ==============================================================================
+# libLBFGS: C library of limited-memory BFGS (L-BFGS)
+#
+# Copyright (c) 1990, Jorge Nocedal
+# Copyright (c) 2007-2010, Naoaki Okazaki
+#
+# libLBFGS is distributed under the term of the MIT license.
+# Please refer to COPYING file in the distribution.
+# ==============================================================================
 
 # ----------------------------------------------------------------------------
 # CMake version and policies
@@ -90,22 +98,23 @@ endif ()
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Subproject.cmake")
 
 # ----------------------------------------------------------------------------
-# package
-subproject(LibLBFGS VERSION 1.10.0 LANGUAGES C)
+# package info
+subproject(LBFGS VERSION 1.10.0 LANGUAGES C)
 
-set(PACKAGE_STRING    "${PROJECT_NAME} ${PROJECT_VERSION}")
-set(PACKAGE_TARNAME   "${PROJECT_NAME_LOWER}-${PROJECT_VERSION}")
+set(PACKAGE_NAME      "libLBFGS")
+set(PACKAGE_STRING    "${PACKAGE_NAME} ${PROJECT_VERSION}")
+set(PACKAGE_TARNAME   "liblbfgs-${PROJECT_VERSION}")
 set(PACKAGE_BUGREPORT "https://github.com/chokkan/liblbfgs/issues")
 
 # ----------------------------------------------------------------------------
 # options
-define(BOOL BUILD_SHARED_LIBS "Enable build of shared libraries"                OFF)
-define(BOOL BUILD_EXAMPLES    "Enable build of sample programs"                 OFF)
-define(BOOL USE_DOUBLE        "Use double precision floating point arithmetics" ON)
-define(BOOL USE_SSE           "Use SSE/SSE2 instructions for optimization"      OFF)
-define(BOOL USE_IEEE754       "Activate optimization routines for IEEE754 floating point values" ON)
+subproject_define(BOOL BUILD_SHARED_LIBS "Enable build of shared libraries"                OFF)
+subproject_define(BOOL BUILD_EXAMPLES    "Enable build of sample programs"                 OFF)
+subproject_define(BOOL USE_DOUBLE        "Use double precision floating point arithmetics" ON)
+subproject_define(BOOL USE_SSE           "Use SSE/SSE2 instructions for optimization"      OFF)
+subproject_define(BOOL USE_IEEE754       "Activate optimization routines for IEEE754 floating point values" ON)
 
-set_cache_property(USE_IEEE754 ADVANCED TRUE)
+subproject_set_property(USE_IEEE754 ADVANCED TRUE)
 
 # ----------------------------------------------------------------------------
 # checks for SSE/SSE2 instructions header files
@@ -115,13 +124,13 @@ if (USE_SSE)
     check_include_file(emmintrin.h HAVE_EMMINTRIN_H)
     if (NOT HAVE_EMMINTRIN_H)
       message(WARNING "SSE2 instructions header file emmintrin.h not found. Disabled SSE optimizations.")
-      set_value(USE_SSE OFF)
+      subproject_set_property(USE_SSE VALUE OFF)
     endif ()
   else ()
     check_include_file(xmmintrin.h HAVE_XMMINTRIN_H)
     if (NOT HAVE_XMMINTRIN_H)
       message(WARNING "SSE instructions header file xmmintrin.h not found. Disabled SSE optimizations.")
-      set_value(USE_SSE OFF)
+      subproject_set_property(USE_SSE VALUE OFF)
     endif ()
   endif ()
 endif ()
@@ -139,9 +148,9 @@ set(SOURCES
   "lib/arithmetic_sse_double.h"
 )
 
-add_library(liblbfgs ${HEADERS} ${SOURCES})
+subproject_add_library(_lib "lib" ${HEADERS} ${SOURCES})
 
-set_target_properties(liblbfgs PROPERTIES
+set_target_properties(${_lib} PROPERTIES
   OUTPUT_NAME   lbfgs
   VERSION       ${PROJECT_VERSION}
   SOVERSION     ${PROJECT_SOVERSION}
@@ -149,43 +158,43 @@ set_target_properties(liblbfgs PROPERTIES
   POSITION_INDEPENDENT_CODE TRUE
 )
 
-target_include_directories(liblbfgs
+target_include_directories(${_lib}
   PUBLIC  "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
   PRIVATE "${PROJECT_SOURCE_DIR}/lib"
 )
 
 if (NOT USE_DOUBLE)
-  target_compile_definitions(liblbfgs INTERFACE LBFGS_FLOAT=32)
+  target_compile_definitions(${_lib} INTERFACE LBFGS_FLOAT=32)
 endif ()
 if (NOT USE_IEEE754)
-  target_compile_definitions(liblbfgs INTERFACE LBFGS_IEEE_FLOAT=0)
+  target_compile_definitions(${_lib} INTERFACE LBFGS_IEEE_FLOAT=0)
 endif ()
 if (USE_SSE)
   if (USE_DOUBLE)
-    target_compile_definitions(liblbfgs PRIVATE HAVE_EMMINTRIN_H=${HAVE_EMMINTRIN_H})
+    target_compile_definitions(${_lib} PRIVATE HAVE_EMMINTRIN_H=${HAVE_EMMINTRIN_H})
     if (MSVC)
-      target_compile_definitions(liblbfgs PRIVATE __SSE2__)
+      target_compile_definitions(${_lib} PRIVATE __SSE2__)
     endif ()
   else ()
-    target_compile_definitions(liblbfgs PRIVATE HAVE_XMMINTRIN_H=${HAVE_XMMINTRIN_H})
+    target_compile_definitions(${_lib} PRIVATE HAVE_XMMINTRIN_H=${HAVE_XMMINTRIN_H})
     if (MSVC)
-      target_compile_definitions(liblbfgs PRIVATE __SSE__)
+      target_compile_definitions(${_lib} PRIVATE __SSE__)
     endif ()
   endif ()
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUC)
-  target_compile_options(liblbfgs PRIVATE "$<$<CONFIG:Release>:-ffast-math>")
+  target_compile_options(${_lib} PRIVATE "$<$<CONFIG:Release>:-ffast-math>")
   if (USE_SSE)
     if (USE_DOUBLE)
-      target_compile_options(liblbfgs PRIVATE "-msse2")
+      target_compile_options(${_lib} PRIVATE "-msse2")
     else ()
-      target_compile_options(liblbfgs PRIVATE "-msse")
+      target_compile_options(${_lib} PRIVATE "-msse")
     endif ()
   endif ()
 endif ()
 
-install_library(liblbfgs
+subproject_install_library(${_lib}
   RUNTIME_DESTINATION "bin"
   LIBRARY_DESTINATION "lib"
   INCLUDE_DESTINATION "include"
@@ -195,47 +204,37 @@ install_library(liblbfgs
 # ----------------------------------------------------------------------------
 # examples
 if (BUILD_EXAMPLES)
-  add_executable(sample sample/sample.c)
-  target_link_libraries(sample liblbfgs)
+  subproject_add_executable(_sample "sample" sample/sample.c)
+  target_link_libraries(${_sample} ${_lib})
 endif ()
 
 # ----------------------------------------------------------------------------
 # configuration
-if (NOT PROJECT_IS_SUBPROJECT OR NOT DEFINED ${PROJECT_NAME}_INSTALL_CONFIG OR ${PROJECT_NAME}_INSTALL_CONFIG)
+include(CMakePackageConfigHelpers)
 
-  include(CMakePackageConfigHelpers)
+subproject_get_install_config_dir(PROJECT_INSTALL_CONFIG_DIR)
 
-  if (${PROJECT_NAME}_INSTALL_CONFIG_DIR)
-    set(PROJECT_INSTALL_CONFIG_DIR "${${PROJECT_NAME}_INSTALL_CONFIG_DIR}")
-  elseif (WIN32 AND NOT MINGW AND NOT CYGWIN)
-    set(PROJECT_INSTALL_CONFIG_DIR "cmake")
-  else ()
-    set(PROJECT_INSTALL_CONFIG_DIR "lib/cmake/${PROJECT_NAME_LOWER}")
-  endif ()
- 
-  configure_package_config_file(
-    "${PROJECT_SOURCE_DIR}/cmake/Config.cmake.in"
+configure_package_config_file(
+  "${PROJECT_SOURCE_DIR}/cmake/Config.cmake.in"
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+  INSTALL_DESTINATION "${PROJECT_INSTALL_CONFIG_DIR}"
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+)
+
+write_basic_package_version_file(
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+  VERSION       ${PROJECT_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+subproject_install_config_files(
+  FILES
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-    INSTALL_DESTINATION "${PROJECT_INSTALL_CONFIG_DIR}"
-    NO_SET_AND_CHECK_MACRO
-    NO_CHECK_REQUIRED_COMPONENTS_MACRO
-  )
- 
-  write_basic_package_version_file(
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-    VERSION       ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion
-  )
- 
-  install_package_config_files(
-    FILES
-      "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-      "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-    DESTINATION
-      "${PROJECT_INSTALL_CONFIG_DIR}"
-  )
- 
-  export(TARGETS liblbfgs FILE "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
-  install_exports(DESTINATION "${PROJECT_INSTALL_CONFIG_DIR}")
+  DESTINATION
+    "${PROJECT_INSTALL_CONFIG_DIR}"
+)
 
-endif ()
+subproject_export(TARGETS ${_lib})
+subproject_install_exports(DESTINATION "${PROJECT_INSTALL_CONFIG_DIR}")

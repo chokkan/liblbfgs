@@ -38,7 +38,7 @@ macro (subproject name)
   unset(${name}_VERSION_PATCH)
   project(${name} ${_LANGUAGES})
   set(PROJECT_VERSION "${_VERSION}")
-  split_version_numbers(${PROJECT_VERSION}
+  _subproject_split_version_numbers(${PROJECT_VERSION}
     PROJECT_VERSION_MAJOR
     PROJECT_VERSION_MINOR
     PROJECT_VERSION_PATCH
@@ -50,9 +50,9 @@ macro (subproject name)
   if (NOT _SOVERSION)
     set(_SOVERSION ${PROJECT_VERSION_MAJOR})
   endif ()
-  set_abi_version(PROJECT_SOVERSION ${_SOVERSION})
+  _subproject_set_abi_version(PROJECT_SOVERSION ${_SOVERSION})
   set(${name}_SOVERSION ${PROJECT_SOVERSION})
-  check_if_subproject()
+  _subproject_check_if_subproject()
   string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
   string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
   unset(_VERSION)
@@ -68,18 +68,230 @@ macro (subproject name)
 endmacro ()
 
 # ----------------------------------------------------------------------------
-## Convert boolean value to 0 or 1
-macro (bool_to_int VAR)
-  if (${VAR})
-    set(${VAR} 1)
+## Add configuration variable
+#
+# The default value of the (cached) configuration value can be overridden
+# either on the CMake command-line or the super-project by setting the
+# ${PROJECT_NAME}_${varname} variable. When this project is a subproject
+# of another project, i.e., PROJECT_IS_SUBPROJECT is TRUE, the variable
+# is not added to the CMake cache and set to the value of
+# ${PROJECT_NAME}_${varname} regardless if the parent project defines
+# a (cached) variable of the same name. Otherwise, when this project is
+# a standalone project, the variable is cached.
+macro (subproject_define type varname docstring default)
+  if (ARGC GREATER 5)
+    message (FATAL_ERROR "Too many macro arguments")
+  endif ()
+  if (NOT PROJECT_NAME)
+    message (FATAL_ERROR "project() command must be called before to set PROJECT_NAME")
+  endif ()
+  if (NOT DEFINED ${PROJECT_NAME}_${varname})
+    if (PROJECT_IS_SUBPROJECT AND ARGC EQUAL 5)
+      set(${PROJECT_NAME}_${varname} "${ARGV4}")
+    else ()
+      set(${PROJECT_NAME}_${varname} "${default}")
+    endif ()
+  endif ()
+  if (PROJECT_IS_SUBPROJECT)
+    set(${varname} "${${PROJECT_NAME}_${varname}}")
   else ()
-    set(${VAR} 0)
+    set(${varname} "${${PROJECT_NAME}_${varname}}" CACHE ${type} "${docstring}")
   endif ()
 endmacro ()
 
 # ----------------------------------------------------------------------------
-## Extract version numbers from version string
-function (split_version_numbers version major minor patch)
+## Set property of (cached) configuration variable
+#
+# This command does nothing when the previously defined variable was not added
+# to the CMake cache because this project is build as subproject unless
+# the property to be set is the VALUE of the configuration variable.
+#
+# @see subproject_define
+macro (subproject_set_property varname property value)
+  _subproject_check_if_cached(_is_cached ${varname})
+  if (_is_cached)
+    if (property STREQUAL ADVANCED)
+      if (${value})
+        mark_as_advanced(FORCE ${varname})
+      else ()
+        mark_as_advanced(CLEAR ${varname})
+      endif ()
+    else ()
+      set_property(CACHE ${varname} PROPERTY "${property}" "${value}")
+    endif ()
+  elseif (property STREQUAL VALUE)
+    set(${varname} "${value}")
+  endif ()
+  unset(_is_cached)
+endmacro ()
+
+# ----------------------------------------------------------------------------
+## Get unique target name
+macro (subproject_target_name uid target)
+  if (${PROJECT_NAME}_${target}_TARGET_NAME)
+    set(${uid} ${${PROJECT_NAME}_${target}_TARGET_NAME})
+  elseif (PROJECT_IS_SUBPROJECT)
+    set(${uid} "${PROJECT_NAME_LOWER}_${target}")
+  else ()
+    set(${uid} "${target}")
+  endif ()
+endmacro ()
+
+# ----------------------------------------------------------------------------
+## Add executable target
+function (subproject_add_executable uid target)
+  subproject_target_name(_uid ${target})
+  add_executable(${_uid} ${ARGN})
+  if (NOT ${PROJECT_NAME}_NO_ALIASES)
+    add_executable(${PROJECT_NAME}::${target} ALIAS ${_uid})
+  endif ()
+  set(${uid} "${_uid}" PARENT_SCOPE)
+endfunction ()
+
+# ----------------------------------------------------------------------------
+## Add library target
+function (subproject_add_library uid target)
+  subproject_target_name(_uid ${target})
+  add_library(${_uid} ${ARGN})
+  if (NOT ${PROJECT_NAME}_NO_ALIASES)
+    add_library(${PROJECT_NAME}::${target} ALIAS ${_uid})
+  endif ()
+  set(${uid} "${_uid}" PARENT_SCOPE)
+endfunction ()
+
+# ----------------------------------------------------------------------------
+## Install files of library target
+function (subproject_install_library target)
+  # parse arguments
+  if (NOT TARGET ${target})
+    message(FATAL_ERROR "Unknown target: ${target}")
+  endif ()
+  get_target_property(type ${target} TYPE)
+  if (NOT PROJECT_IS_SUBPROJECT OR NOT "^${type}$" STREQUAL "^STATIC_LIBRARY$" OR ${PROJECT_NAME}_INSTALL_STATIC_LIBS)
+    cmake_parse_arguments(""
+      ""
+      "INCLUDE_DESTINATION;LIBRARY_DESTINATION;RUNTIME_DESTINATION"
+      "PUBLIC_HEADER_FILES"
+      ${ARGN}
+    )
+    if (_UNPARSED_ARGUMENTS)
+      message(FATAL_ERROR "Too many or unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
+    endif ()
+    # override (default) arguments
+    if (${PROJECT_NAME}_INSTALL_RUNTIME_DIR)
+      set(_RUNTIME_DESTINATION "${${PROJECT_NAME}_INSTALL_RUNTIME_DIR}")
+    elseif (NOT _RUNTIME_DESTINATION)
+      set(_RUNTIME_DESTINATION bin)
+    endif ()
+    if (${PROJECT_NAME}_INSTALL_INCLUDE_DIR)
+      set(_INCLUDE_DESTINATION "${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}")
+    elseif (NOT _INCLUDE_DESTINATION)
+      set(_INCLUDE_DESTINATION include)
+    endif ()
+    if (${PROJECT_NAME}_INSTALL_LIBRARY_DIR)
+      set(_LIBRARY_DESTINATION "${${PROJECT_NAME}_INSTALL_LIBRARY_DIR}")
+    elseif (NOT _LIBRARY_DESTINATION)
+      set(_LIBRARY_DESTINATION lib)
+    endif ()
+    # skip installation of static subproject library
+    if (_PUBLIC_HEADER_FILES AND (NOT DEFINED ${PROJECT_NAME}_INSTALL_HEADERS OR ${PROJECT_NAME}_INSTALL_HEADERS))
+      install(FILES ${_PUBLIC_HEADER_FILES} DESTINATION ${_INCLUDE_DESTINATION} COMPONENT Development)
+      target_include_directories(${target} INTERFACE "$<INSTALL_INTERFACE:${_INCLUDE_DESTINATION}>")
+    endif ()
+    install(TARGETS ${target} EXPORT ${PROJECT_EXPORT_NAME}
+      RUNTIME DESTINATION ${_RUNTIME_DESTINATION} COMPONENT RuntimeLibraries
+      LIBRARY DESTINATION ${_LIBRARY_DESTINATION} COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION ${_LIBRARY_DESTINATION} COMPONENT Development
+    )
+    set_property(GLOBAL PROPERTY ${PROJECT_NAME}_HAVE_EXPORT TRUE)
+  endif ()
+endfunction ()
+
+# ----------------------------------------------------------------------------
+## Whether to install package configuration files of (sub-)project
+macro (subproject_get_install_config_option var)
+  if (PROJECT_IS_SUBPROJECT AND ${PROJECT_NAME}_INSTALL_CONFIG)
+    set (${var} 1)
+  elseif (NOT PROJECT_IS_SUBPROJECT AND (NOT DEFINED ${PROJECT_NAME}_INSTALL_CONFIG OR ${PROJECT_NAME}_INSTALL_CONFIG))
+    set (${var} 1)
+  else ()
+    set (${var} 0)
+  endif ()
+endmacro ()
+
+# ----------------------------------------------------------------------------
+## Get relative path of package configuration installation directory
+macro (subproject_get_install_config_dir config_dir)
+  if (${PROJECT_NAME}_INSTALL_CONFIG_DIR)
+    set(${config_dir} "${${PROJECT_NAME}_INSTALL_CONFIG_DIR}")
+  elseif (WIN32 AND NOT MINGW AND NOT CYGWIN)
+    set(${config_dir} "cmake")
+  else ()
+    set(${config_dir} "lib/cmake/${PROJECT_NAME_LOWER}")
+  endif ()
+endmacro ()
+
+# ----------------------------------------------------------------------------
+## Install package configuration files
+function (subproject_install_config_files)
+  subproject_get_install_config_option (_install_config)
+  if (_install_config)
+    # parse arguments
+    cmake_parse_arguments("" "" "DESTINATION" "FILES" ${ARGN})
+    if (_UNPARSED_ARGUMENTS)
+      message(FATAL_ERROR "Unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
+    endif ()
+    if (${PROJECT_NAME}_INSTALL_CONFIG_DIR OR NOT _DESTINATION)
+      subproject_get_install_config_dir(_DESTINATION)
+    endif ()
+    # install package configuration files if not overriden
+    install(FILES ${_FILES} DESTINATION ${_DESTINATION} COMPONENT Development)
+  endif ()
+endfunction ()
+
+# ----------------------------------------------------------------------------
+## Generate build tree targets configuration file
+function (subproject_export)
+  cmake_parse_arguments("" "" "" "TARGETS" ${ARGN})
+  export(TARGETS ${_TARGETS} ${_UNPARSED_ARGUMENTS}
+    FILE      "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake"
+    NAMESPACE "${PROJECT_NAME}::"
+  )
+endfunction ()
+
+# ----------------------------------------------------------------------------
+## Install exported targets configuration files
+function (subproject_install_exports)
+  subproject_get_install_config_option (_install_config)
+  if (_install_config)
+    # parse arguments
+    cmake_parse_arguments("" "" "DESTINATION" "" ${ARGN})
+    if (_UNPARSED_ARGUMENTS)
+      message(FATAL_ERROR "Unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
+    endif ()
+    if (${PROJECT_NAME}_INSTALL_CONFIG_DIR OR NOT _DESTINATION)
+      subproject_get_install_config_dir(_DESTINATION)
+    endif ()
+    # install export sets
+    get_property(have_export GLOBAL PROPERTY ${PROJECT_NAME}_HAVE_EXPORT)
+    if (have_export)
+      install(EXPORT ${PROJECT_EXPORT_NAME}
+        FILE        "${PROJECT_NAME}Targets.cmake"
+        NAMESPACE   "${PROJECT_NAME}::"
+        DESTINATION "${_DESTINATION}"
+        COMPONENT   Development
+      )
+    endif ()
+  endif ()
+endfunction ()
+
+# ==============================================================================
+# Private auxiliary functions
+# ==============================================================================
+
+# ----------------------------------------------------------------------------
+# Extract version numbers from version string
+function (_subproject_split_version_numbers version major minor patch)
   if (version MATCHES "([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(rc[1-9][0-9]*|[a-z]+)?")
     if (CMAKE_MATCH_1)
       set(_major ${CMAKE_MATCH_1})
@@ -109,11 +321,11 @@ function (split_version_numbers version major minor patch)
 endfunction ()
 
 # ----------------------------------------------------------------------------
-## Set ABI version number
+# Set ABI version number
 #
 # When the variable ${PROJECT_NAME}_SOVERSION is set, it overrides the ABI
 # version number argument.
-macro (set_abi_version varname number)
+macro (_subproject_set_abi_version varname number)
   if (${PROJECT_NAME}_SOVERSION)
     set(${varname} "${${PROJECT_NAME}_SOVERSION}")
   else ()
@@ -122,7 +334,7 @@ macro (set_abi_version varname number)
 endmacro ()
 
 # ----------------------------------------------------------------------------
-## Determine if project is build as subproject
+# Determine if project is build as subproject
 #
 # When included as subproject (e.g., as Git submodule/subtree) in the source
 # tree of a project that uses it, no variables should be added to the CMake cache;
@@ -130,7 +342,7 @@ endmacro ()
 # the add_subdirectory command that adds this subdirectory to the build.
 #
 # @returns Sets PROJECT_IS_SUBPROJECT to either TRUE or FALSE.
-macro (check_if_subproject)
+macro (_subproject_check_if_subproject)
   if (DEFINED ${PROJECT_NAME}_IS_SUBPROJECT)
     set(PROJECT_IS_SUBPROJECT ${PROJECT_NAME}_IS_SUBPROJECT)
   elseif ("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
@@ -141,175 +353,11 @@ macro (check_if_subproject)
 endmacro ()
 
 # ----------------------------------------------------------------------------
-## Determine if cache entry exists
-macro (check_if_cached retvar varname)
+# Determine if cache entry exists
+macro (_subproject_check_if_cached retvar varname)
   if (DEFINED ${varname})
     get_property(${retvar} CACHE ${varname} PROPERTY TYPE SET)
   else ()
     set(${retvar} FALSE)
   endif ()
 endmacro ()
-
-# ----------------------------------------------------------------------------
-## Add configuration variable
-#
-# The default value of the (cached) configuration value can be overridden
-# either on the CMake command-line or the super-project by setting the
-# ${PROJECT_NAME}_${varname} variable. When this project is a subproject
-# of another project, i.e., PROJECT_IS_SUBPROJECT is TRUE, the variable
-# is not added to the CMake cache and set to the value of
-# ${PROJECT_NAME}_${varname} regardless if the parent project defines
-# a (cached) variable of the same name. Otherwise, when this project is
-# a standalone project, the variable is cached.
-macro (define type varname docstring default)
-  if (ARGC GREATER 5)
-    message (FATAL_ERROR "Too many macro arguments")
-  endif ()
-  if (NOT PROJECT_NAME)
-    message (FATAL_ERROR "project() command must be called before to set PROJECT_NAME")
-  endif ()
-  if (NOT DEFINED ${PROJECT_NAME}_${varname})
-    if (PROJECT_IS_SUBPROJECT AND ARGC EQUAL 5)
-      set(${PROJECT_NAME}_${varname} "${ARGV4}")
-    else ()
-      set(${PROJECT_NAME}_${varname} "${default}")
-    endif ()
-  endif ()
-  if (PROJECT_IS_SUBPROJECT)
-    set(${varname} "${${PROJECT_NAME}_${varname}}")
-  else ()
-    set(${varname} "${${PROJECT_NAME}_${varname}}" CACHE ${type} "${docstring}")
-  endif ()
-endmacro ()
-
-# ----------------------------------------------------------------------------
-## Set property of cached configuration variable
-#
-# This command does nothing when the previously defined variable was not added
-# to the CMake cache because this project is build as subproject.
-#
-# @see define
-macro (set_cache_property varname property value)
-  check_if_cached(_is_cached ${varname})
-  if (_is_cached)
-    if (property STREQUAL ADVANCED)
-      if (${value})
-        mark_as_advanced(FORCE ${varname})
-      else ()
-        mark_as_advanced(CLEAR ${varname})
-      endif ()
-    else ()
-      set_property(CACHE ${varname} PROPERTY "${property}" "${value}")
-    endif ()
-  endif ()
-  unset(_is_cached)
-endmacro ()
-
-# ----------------------------------------------------------------------------
-## Modify value of defined configuration variable
-macro (set_value varname value)
-  check_if_cached (_is_cached ${varname})
-  if (_is_cached)
-    set_property(CACHE ${varname} PROPERTY VALUE "${value}")
-  else ()
-    set(${varname} "${value}")
-  endif ()
-  unset(_is_cached)
-endmacro ()
-
-# ----------------------------------------------------------------------------
-## Install library
-function (install_library target)
-  # parse arguments
-  if (NOT TARGET ${target})
-    message(FATAL_ERROR "Unknown target: ${target}")
-  endif ()
-  get_target_property(type ${target} TYPE)
-  if (NOT PROJECT_IS_SUBPROJECT OR
-      NOT "^${type}$" STREQUAL "^STATIC_LIBRARY$" OR
-      ${PROJECT_NAME}_INSTALL_STATIC_LIBS)
-    cmake_parse_arguments(""
-      ""
-      "INCLUDE_DESTINATION;LIBRARY_DESTINATION;RUNTIME_DESTINATION"
-      "PUBLIC_HEADER_FILES"
-      ${ARGN}
-    )
-    if (_UNPARSED_ARGUMENTS)
-      message(FATAL_ERROR "Too many or unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
-    endif ()
-    # override (default) arguments
-    if (${PROJECT_NAME}_INSTALL_RUNTIME_DIR)
-      set(_RUNTIME_DESTINATION "${${PROJECT_NAME}_INSTALL_RUNTIME_DIR}")
-    elseif (NOT _RUNTIME_DESTINATION)
-      set(_RUNTIME_DESTINATION bin)
-    endif ()
-    if (${PROJECT_NAME}_INSTALL_INCLUDE_DIR)
-      set(_INCLUDE_DESTINATION "${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}")
-    elseif (NOT _INCLUDE_DESTINATION)
-      set(_INCLUDE_DESTINATION include)
-    endif ()
-    if (${PROJECT_NAME}_INSTALL_LIBRARY_DIR)
-      set(_LIBRARY_DESTINATION "${${PROJECT_NAME}_INSTALL_LIBRARY_DIR}")
-    elseif (NOT _LIBRARY_DESTINATION)
-      set(_LIBRARY_DESTINATION lib)
-    endif ()
-    # skip installation of static subproject library
-    if (_PUBLIC_HEADER_FILES)
-      install(FILES ${_PUBLIC_HEADER_FILES} DESTINATION ${_INCLUDE_DESTINATION} COMPONENT Development)
-      target_include_directories(${target} INTERFACE "$<INSTALL_INTERFACE:${_INCLUDE_DESTINATION}>")
-    endif ()
-    install(TARGETS ${target} EXPORT ${PROJECT_EXPORT_NAME}
-      RUNTIME DESTINATION ${_RUNTIME_DESTINATION} COMPONENT RuntimeLibraries
-      LIBRARY DESTINATION ${_LIBRARY_DESTINATION} COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION ${_LIBRARY_DESTINATION} COMPONENT Development
-    )
-    set_property(GLOBAL PROPERTY ${PROJECT_NAME}_HAVE_EXPORT TRUE)
-  endif ()
-endfunction ()
-
-# ----------------------------------------------------------------------------
-## Install package configuration files
-function (install_package_config_files)
-  if (NOT PROJECT_IS_SUBPROJECT OR NOT DEFINED ${PROJECT_NAME}_INSTALL_CONFIG OR ${PROJECT_NAME}_INSTALL_CONFIG)
-    # parse arguments
-    cmake_parse_arguments("" "" "DESTINATION" "FILES" ${ARGN})
-    if (_UNPARSED_ARGUMENTS)
-      message(FATAL_ERROR "Unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
-    endif ()
-    # override (default) arguments
-    if (${PROJECT_NAME}_INSTALL_CONFIG_DIR)
-      set(_DESTINATION "${${PROJECT_NAME}_INSTALL_CONFIG_DIR}")
-    elseif (NOT _DESTINATION)
-      set(_DESTINATION "lib/cmake/${PROJECT_NAME_LOWER}")
-    endif ()
-    # install package configuration files if not overriden
-    install(FILES ${_FILES} DESTINATION ${_DESTINATION} COMPONENT Development)
-  endif ()
-endfunction ()
-
-# ----------------------------------------------------------------------------
-## Install exported targets configuration files
-function (install_exports)
-  if (NOT PROJECT_IS_SUBPROJECT OR NOT DEFINED ${PROJECT_NAME}_INSTALL_CONFIG OR ${PROJECT_NAME}_INSTALL_CONFIG)
-    cmake_parse_arguments("" "" "DESTINATION;NAMESPACE" "" ${ARGN})
-    if (_UNPARSED_ARGUMENTS)
-      message(FATAL_ERROR "Unrecognized arguments: ${_UNPARSED_ARGUMENTS}")
-    endif ()
-    # override (default) arguments
-    if (${PROJECT_NAME}_INSTALL_CONFIG_DIR)
-      set(_DESTINATION "${${PROJECT_NAME}_INSTALL_CONFIG_DIR}")
-    elseif (NOT _DESTINATION)
-      set(_DESTINATION "lib/cmake/${PROJECT_NAME_LOWER}")
-    endif ()
-    # install export sets
-    get_property(have_export GLOBAL PROPERTY ${PROJECT_NAME}_HAVE_EXPORT)
-    if (have_export)
-      install(EXPORT ${PROJECT_EXPORT_NAME}
-        NAMESPACE   "${_NAMESPACE}"
-        DESTINATION "${_DESTINATION}"
-        FILE        "${PROJECT_NAME}Targets.cmake"
-        COMPONENT   Development
-      )
-    endif ()
-  endif ()
-endfunction ()
