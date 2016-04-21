@@ -67,6 +67,7 @@
 #                                files are installed as well. The default is
 #                                to not install static libraries when this
 #                                project is a subproject of another project.
+#    LBFGS_INSTALL_HEADERS     - Can be used to omit installation of public header files.
 #    LBFGS_INSTALL_CONFIG      - Whether to install CMake configuration files.
 #                                By default, the CMake configuration files are
 #                                installed when the library itself is installed.
