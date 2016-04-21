@@ -3,21 +3,21 @@
 # ---------------------------------------
 #
 # This CMakeLists.txt defines some libLBFGS specific configuration variables
-# using a custom "define" command defined in the Subproject.cmake module.
+# using a custom "subproject_define" command defined in the Subproject.cmake module.
 # The default values of these variables can be overridden either on the CMake
 # command-line using the -D option of the cmake command or in a super-project
-# which includes the libLBFGS source tree by setting the LibLBFGS_<varname>
+# which includes the libLBFGS source tree by setting the LBFGS_<varname>
 # CMake variables before adding the libLBFGS source directory via CMake's
-# add_subdirectory command. Only when the non-cached variable LibLBFGS_IS_SUBPROJECT
+# add_subdirectory command. Only when the non-cached variable LBFGS_IS_SUBPROJECT
 # has a value equivalent to FALSE, these configuration variables are added to
 # the CMake cache so they can be edited in the CMake GUI. By default,
-# LibLBFGS_IS_SUBPROJECT is set to TRUE when the CMAKE_SOURCE_DIR is not identical
+# LBFGS_IS_SUBPROJECT is set to TRUE when the CMAKE_SOURCE_DIR is not identical
 # to the directory of this CMakeLists.txt  file, i.e., the top-level directory of
 # the libLBFGS project source tree.
 #
 # Example CMakeLists.txt of user project which requires separate libLBFGS
-# installation (possibly requires FindLibLBFGS.cmake module for distribution
-# packages of libLBFGS that do not include a LibLBFGSConfig.cmake file)::
+# installation (possibly requires FindLBFGS.cmake module for distribution
+# packages of libLBFGS that do not include a LBFGSConfig.cmake file)::
 #
 #    cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 #
@@ -41,7 +41,7 @@
 #
 #    add_executable(foo src/foo.cc)
 #    target_link_libraries(foo liblbfgs)
-#    # or use the always defined namespaced ALIAS target, i.e.,
+#    # or use the usual namespaced ALIAS target:
 #    #target_link_libraries(foo LBFGS::lib)
 #
 # Variables to configure the source files::
