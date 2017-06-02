@@ -510,7 +510,7 @@ int lbfgs(
         /*
             Test for stopping criterion.
             The criterion is given by the following formula:
-                (f(past_x) - f(x)) / f(x) < \delta
+                |(f(past_x) - f(x))| / f(x) < \delta
          */
         if (pf != NULL) {
             /* We don't test the stopping criterion while k < past. */
@@ -519,7 +519,7 @@ int lbfgs(
                 rate = (pf[k % param.past] - fx) / fx;
 
                 /* The stopping criterion. */
-                if (rate < param.delta) {
+                if (fabs(rate) < param.delta) {
                     ret = LBFGS_STOP;
                     break;
                 }
