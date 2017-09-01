@@ -1,0 +1,50 @@
+cmake_minimum_required(VERSION 2.8)
+SET(PROJECTNAME lbfgs_gpu)
+PROJECT(${PROJECTNAME})
+
+SET(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+find_package(CUDA REQUIRED)
+
+
+
+add_compile_options(-std=c++11)
+
+INCLUDE_DIRECTORIES(${CUDA_INCLUDE_DIRS} include)
+
+SET(HEADERS include/dev_funcs.cuh  include/lbfgs.cuh)
+
+set_directory_properties( PROPERTIES COMPILE_DEFINITIONS "" )
+
+SET(CUDA_LIBRARIES ${CUDA_LIBRARIES})
+
+LIST(APPEND CUDA_NVCC_FLAGS --compiler-options -fno-strict-aliasing -lineinfo -use_fast_math -Xptxas -dlcm=cg -Xcompiler -fopenmp)
+
+LIST(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_35,code=sm_35)
+
+
+
+FILE(GLOB SOURCES "*.cu"  "*.cpp" "*.c")
+
+
+CUDA_ADD_LIBRARY(${PROJECTNAME}  ${SOURCES} ${HEADERS})
+TARGET_LINK_LIBRARIES(${PROJECTNAME} ${CUDA_LIBRARIES})
+
+CUDA_ADD_EXECUTABLE(example1  ${CMAKE_SOURCE_DIR}/example.cpp)
+TARGET_LINK_LIBRARIES(example1 ${PROJECTNAME})
+
+SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    )
+
+
+
+
+
+
+
+
+
+
+
