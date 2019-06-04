@@ -233,7 +233,7 @@ typedef struct {
      *      (f' - f) / f < \ref delta,
      *  where f' is the objective value of \ref past iterations ago, and f is
      *  the objective value of the current iteration.
-     *  The default value is \c 0.
+     *  The default value is \c 1e-5.
      */
     lbfgsfloatval_t delta;
 
