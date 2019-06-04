@@ -28,6 +28,14 @@ http://www.chokkan.org/software/liblbfgs/
 Open the solution file "lbfgs.sln" and build it.
 
 [GCC]
+
+On top of a compiler and GNU Make, you will also need to install libtool
+and automake to build.
+
+On Debian distributions, this can be installed with:
+sudo apt install libtool automake
+
+$ ./autogen.sh
 $ ./configure
 $ make
 $ make install  # To install libLBFGS library and header.
