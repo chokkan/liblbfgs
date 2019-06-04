@@ -1,0 +1,15 @@
+## @PROJECT_NAME@ CMake configuration file
+
+# library version information
+set(@PROJECT_NAME@_VERSION_STRING "@PROJECT_VERSION@")
+set(@PROJECT_NAME@_VERSION_MAJOR  @PROJECT_VERSION_MAJOR@)
+set(@PROJECT_NAME@_VERSION_MINOR  @PROJECT_VERSION_MINOR@)
+set(@PROJECT_NAME@_VERSION_PATCH  @PROJECT_VERSION_PATCH@)
+
+# import exported targets
+if (NOT TARGET @PROJECT_NAME@::lib)
+  include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+endif ()
+
+# project libraries
+set(@PROJECT_NAME@_LIBRARIES @PROJECT_NAME@::lib)
