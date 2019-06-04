@@ -99,6 +99,7 @@ struct tag_callback_data {
     void *instance;
     lbfgs_evaluate_t proc_evaluate;
     lbfgs_progress_t proc_progress;
+    int remaining_evaluates;
 };
 typedef struct tag_callback_data callback_data_t;
 
@@ -112,7 +113,7 @@ typedef struct tag_iteration_data iteration_data_t;
 
 static const lbfgs_parameter_t _defparam = {
     6, 1e-5, 0, 1e-5,
-    0, LBFGS_LINESEARCH_DEFAULT, 40,
+    0, 0, LBFGS_LINESEARCH_DEFAULT, 40,
     1e-20, 1e20, 1e-4, 0.9, 0.9, 1.0e-16,
     0.0, 0, -1,
 };
@@ -276,6 +277,11 @@ int lbfgs(
     cd.instance = instance;
     cd.proc_evaluate = proc_evaluate;
     cd.proc_progress = proc_progress;
+    if(_param->max_evals > 0 ) {
+        cd.remaining_evaluates = _param->max_evals;
+    } else {
+        cd.remaining_evaluates = -1;
+    }
 
 #if     defined(USE_SSE) && (defined(__SSE__) || defined(__SSE2__))
     /* Round out the number of variables. */
@@ -410,6 +416,10 @@ int lbfgs(
 
     /* Evaluate the function value and its gradient. */
     fx = cd.proc_evaluate(cd.instance, x, g, cd.n, 0);
+
+    if(cd.remaining_evaluates != -1 ) {
+    	--cd.remaining_evaluates;
+    }
     if (0. != param.orthantwise_c) {
         /* Compute the L1 norm of the variable and add it to the object value. */
         xnorm = owlqn_x1norm(x, param.orthantwise_start, param.orthantwise_end);
@@ -448,6 +458,12 @@ int lbfgs(
     if (gnorm / xnorm <= param.epsilon) {
         ret = LBFGS_ALREADY_MINIMIZED;
         goto lbfgs_exit;
+    }
+
+    if(cd.remaining_evaluates == 0 ) {
+    	/* Maximum number of evaluations. */
+    	ret = LBFGSERR_MAXIMUMEVALS;
+    	goto lbfgs_exit;
     }
 
     /* Compute the initial step:
@@ -510,7 +526,7 @@ int lbfgs(
         /*
             Test for stopping criterion.
             The criterion is given by the following formula:
-                (f(past_x) - f(x)) / f(x) < \delta
+                |(f(past_x) - f(x)) / f(x)| < \delta
          */
         if (pf != NULL) {
             /* We don't test the stopping criterion while k < past. */
@@ -519,7 +535,7 @@ int lbfgs(
                 rate = (pf[k % param.past] - fx) / fx;
 
                 /* The stopping criterion. */
-                if (rate < param.delta) {
+                if (fabs(rate) < param.delta) {
                     ret = LBFGS_STOP;
                     break;
                 }
@@ -533,6 +549,12 @@ int lbfgs(
             /* Maximum number of iterations. */
             ret = LBFGSERR_MAXIMUMITERATION;
             break;
+        }
+
+        if(cd.remaining_evaluates == 0 ) {
+        	/* Maximum number of evaluations. */
+        	ret = LBFGSERR_MAXIMUMEVALS;
+        	break;
         }
 
         /*
@@ -685,6 +707,10 @@ static int line_search_backtracking(
         /* Evaluate the function and gradient values. */
         *f = cd->proc_evaluate(cd->instance, x, g, cd->n, *stp);
 
+        if(cd->remaining_evaluates != -1 ) {
+        	--cd->remaining_evaluates;
+        }
+
         ++count;
 
         if (*f > finit + *stp * dgtest) {
@@ -724,6 +750,12 @@ static int line_search_backtracking(
             /* The step is the maximum value. */
             return LBFGSERR_MAXIMUMSTEP;
         }
+
+        if(cd->remaining_evaluates == 0 ) {
+        	/* Maximum number of evaluations. */
+        	return LBFGSERR_MAXIMUMEVALS;
+        }
+
         if (param->max_linesearch <= count) {
             /* Maximum number of iteration. */
             return LBFGSERR_MAXIMUMLINESEARCH;
@@ -731,6 +763,8 @@ static int line_search_backtracking(
 
         (*stp) *= width;
     }
+
+    return LBFGSERR_UNKNOWNERROR;
 }
 
 
@@ -774,6 +808,10 @@ static int line_search_backtracking_owlqn(
         /* Evaluate the function and gradient values. */
         *f = cd->proc_evaluate(cd->instance, x, g, cd->n, *stp);
 
+        if(cd->remaining_evaluates != -1 ) {
+        	--cd->remaining_evaluates;
+        }
+
         /* Compute the L1 norm of the variables and add it to the object value. */
         norm = owlqn_x1norm(x, param->orthantwise_start, param->orthantwise_end);
         *f += norm * param->orthantwise_c;
@@ -798,6 +836,12 @@ static int line_search_backtracking_owlqn(
             /* The step is the maximum value. */
             return LBFGSERR_MAXIMUMSTEP;
         }
+
+        if(cd->remaining_evaluates == 0 ) {
+        	/* Maximum number of evaluations. */
+        	return LBFGSERR_MAXIMUMEVALS;
+        }
+
         if (param->max_linesearch <= count) {
             /* Maximum number of iteration. */
             return LBFGSERR_MAXIMUMLINESEARCH;
@@ -805,6 +849,8 @@ static int line_search_backtracking_owlqn(
 
         (*stp) *= width;
     }
+
+    return LBFGSERR_UNKNOWNERROR;
 }
 
 
@@ -904,6 +950,11 @@ static int line_search_morethuente(
         vecdot(&dg, g, s, n);
 
         ftest1 = finit + *stp * dgtest;
+
+        if(cd->remaining_evaluates != -1 ) {
+        	--cd->remaining_evaluates;
+        }
+
         ++count;
 
         /* Test for errors and convergence. */
@@ -923,6 +974,12 @@ static int line_search_morethuente(
             /* Relative width of the interval of uncertainty is at most xtol. */
             return LBFGSERR_WIDTHTOOSMALL;
         }
+
+        if(cd->remaining_evaluates == 0 ) {
+        	/* Maximum number of evaluations. */
+        	return LBFGSERR_MAXIMUMEVALS;
+        }
+
         if (param->max_linesearch <= count) {
             /* Maximum number of iteration. */
             return LBFGSERR_MAXIMUMLINESEARCH;

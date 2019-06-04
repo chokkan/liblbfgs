@@ -230,7 +230,7 @@ typedef struct {
      *  This parameter determines the minimum rate of decrease of the
      *  objective function. The library stops iterations when the
      *  following condition is met:
-     *      (f' - f) / f < \ref delta,
+     *      |(f' - f)| / f < \ref delta,
      *  where f' is the objective value of \ref past iterations ago, and f is
      *  the objective value of the current iteration.
      *  The default value is \c 0.
@@ -246,6 +246,19 @@ typedef struct {
      *  is \c 0.
      */
     int             max_iterations;
+
+    /**
+         * The maximum number of trials for user function evaluation.
+     *  This parameter controls the number of function and gradients evaluations
+     *  per iteration for the line search routine. The default value is \c 0.
+     * The maximum number of iterations.
+     *  The lbfgs() function terminates an optimization process with
+     *  ::LBFGSERR_MAXIMUMEVALS status code when the iteration count
+     *  exceedes this parameter. Setting this parameter to zero continues an
+     *  optimization process until a convergence or error. The default value
+     *  is \c 0.
+     */
+    int             max_evals;
 
     /**
      * The line search algorithm.
