@@ -1,5 +1,7 @@
 # $Id$
 
+ACLOCAL_AMFLAGS = -I m4
+
 SUBDIRS = lib sample
 
 docdir = $(prefix)/share/doc/@PACKAGE@

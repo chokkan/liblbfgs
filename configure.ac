@@ -10,15 +10,16 @@ dnl INCLUDES
 dnl ------------------------------------------------------------------
 dnl Initialization for autoconf
 dnl ------------------------------------------------------------------
-AC_PREREQ(2.59)
-AC_INIT
+AC_PREREQ([2.69])
+AC_INIT(liblbfgs, 1.10)
 AC_CONFIG_SRCDIR([lib/lbfgs.c])
+AC_CONFIG_MACRO_DIR([m4])
 
 
 dnl ------------------------------------------------------------------
 dnl Initialization for automake
 dnl ------------------------------------------------------------------
-AM_INIT_AUTOMAKE(liblbfgs, 1.10)
+AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS(config.h)
 AM_MAINTAINER_MODE
 
@@ -26,7 +27,7 @@ AM_MAINTAINER_MODE
 dnl ------------------------------------------------------------------
 dnl Checks for program
 dnl ------------------------------------------------------------------
-AC_PROG_LIBTOOL
+LT_INIT
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
