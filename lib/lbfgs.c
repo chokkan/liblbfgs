@@ -1156,6 +1156,7 @@ static int line_search_morethuente(
  *  @param  v       The value of another point, v.
  *  @param  fv      The value of f(v).
  *  @param  dv      The value of f'(v).
+ *  @param  du      The value of f'(v).
  *  @param  xmin    The minimum value.
  *  @param  xmax    The maximum value.
  */
