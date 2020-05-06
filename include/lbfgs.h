@@ -303,7 +303,7 @@ typedef struct {
      *  evaluations are inexpensive with respect to the cost of the
      *  iteration (which is sometimes the case when solving very large
      *  problems) it may be advantageous to set this parameter to a small
-     *  value. A typical small value is \c 0.1. This parameter shuold be
+     *  value. A typical small value is \c 0.1. This parameter should be
      *  greater than the \ref ftol parameter (\c 1e-4) and smaller than
      *  \c 1.0.
      */
