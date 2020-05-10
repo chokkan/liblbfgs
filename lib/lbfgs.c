@@ -1190,7 +1190,7 @@ static int line_search_morethuente(
  *  @param  v       The value of another point, v.
  *  @param  fv      The value of f(v).
  */
-#define QUARD_MINIMIZER(qm, u, fu, du, v, fv) \
+#define QUAD_MINIMIZER(qm, u, fu, du, v, fv) \
     a = (v) - (u); \
     (qm) = (u) + (du) / (((fu) - (fv)) / a + (du)) / 2 * a;
 
@@ -1202,7 +1202,7 @@ static int line_search_morethuente(
  *  @param  v       The value of another point, v.
  *  @param  dv      The value of f'(v).
  */
-#define QUARD_MINIMIZER2(qm, u, du, v, dv) \
+#define QUAD_MINIMIZER2(qm, u, du, v, dv) \
     a = (u) - (v); \
     (qm) = (v) + (dv) / ((dv) - (du)) * a;
 
@@ -1255,7 +1255,7 @@ static int update_trial_interval(
     lbfgsfloatval_t mc; /* minimizer of an interpolated cubic. */
     lbfgsfloatval_t mq; /* minimizer of an interpolated quadratic. */
     lbfgsfloatval_t newt;   /* new trial value. */
-    USES_MINIMIZER;     /* for CUBIC_MINIMIZER and QUARD_MINIMIZER. */
+    USES_MINIMIZER;     /* for CUBIC_MINIMIZER and QUAD_MINIMIZER. */
 
     /* Check the input parameters for errors. */
     if (*brackt) {
@@ -1286,7 +1286,7 @@ static int update_trial_interval(
         *brackt = 1;
         bound = 1;
         CUBIC_MINIMIZER(mc, *x, *fx, *dx, *t, *ft, *dt);
-        QUARD_MINIMIZER(mq, *x, *fx, *dx, *t, *ft);
+        QUAD_MINIMIZER(mq, *x, *fx, *dx, *t, *ft);
         if (fabs(mc - *x) < fabs(mq - *x)) {
             newt = mc;
         } else {
@@ -1302,7 +1302,7 @@ static int update_trial_interval(
         *brackt = 1;
         bound = 0;
         CUBIC_MINIMIZER(mc, *x, *fx, *dx, *t, *ft, *dt);
-        QUARD_MINIMIZER2(mq, *x, *dx, *t, *dt);
+        QUAD_MINIMIZER2(mq, *x, *dx, *t, *dt);
         if (fabs(mc - *t) > fabs(mq - *t)) {
             newt = mc;
         } else {
@@ -1322,7 +1322,7 @@ static int update_trial_interval(
          */
         bound = 1;
         CUBIC_MINIMIZER2(mc, *x, *fx, *dx, *t, *ft, *dt, tmin, tmax);
-        QUARD_MINIMIZER2(mq, *x, *dx, *t, *dt);
+        QUAD_MINIMIZER2(mq, *x, *dx, *t, *dt);
         if (*brackt) {
             if (fabs(*t - mc) < fabs(*t - mq)) {
                 newt = mc;
