@@ -1,0 +1,13 @@
+The package can be directly installed with command go if libLBFGS is
+installed to standard locations. Otherwise, change the lines starting
+with #cgo above
+
+    import "C"
+
+in lbfgs.go to
+
+    #cgo LDFLAGS: -Lpath_to_lbfgs_lib -llbfgs
+    #cgo CFLAGS: -Ipath_to_lbfgs_include
+
+to let the compiler know your custom install location. For more
+information, see [http://golang.org/cmd/cgo].
