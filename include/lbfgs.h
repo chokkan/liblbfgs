@@ -26,8 +26,8 @@
 
 /* $Id$ */
 
-#ifndef __LBFGS_H__
-#define __LBFGS_H__
+#ifndef LBFGS_H_
+#define LBFGS_H_
 
 #ifdef  __cplusplus
 extern "C" {
@@ -752,4 +752,4 @@ licence.
   <a href="http://cctbx.sourceforge.net/current_cvs/c_plus_plus/namespacescitbx_1_1lbfgs.html">scitbx::lbfgs</a>.
 */
 
-#endif/*__LBFGS_H__*/
+#endif/*LBFGS_H_*/
