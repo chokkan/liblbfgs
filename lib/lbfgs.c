@@ -769,6 +769,9 @@ static int line_search_backtracking(
     const lbfgs_parameter_t *param
     )
 {
+    (void)gp;
+    (void)wp;
+
     int count = 0;
     lbfgsfloatval_t width, dg;
     lbfgsfloatval_t finit, dginit = 0., dgtest;
@@ -936,6 +939,9 @@ static int line_search_morethuente(
     const lbfgs_parameter_t *param
     )
 {
+    (void)gp;
+    (void)wa;
+
     int count = 0;
     int brackt, stage1, uinfo = 0;
     lbfgsfloatval_t dg;
