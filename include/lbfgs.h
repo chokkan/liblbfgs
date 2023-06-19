@@ -752,4 +752,4 @@ licence.
   <a href="http://cctbx.sourceforge.net/current_cvs/c_plus_plus/namespacescitbx_1_1lbfgs.html">scitbx::lbfgs</a>.
 */
 
-#endif/*LBFGS_H_*/
+#endif/*__LBFGS_H__*/
