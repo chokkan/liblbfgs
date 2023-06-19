@@ -26,8 +26,8 @@
 
 /* $Id$ */
 
-#ifndef LBFGS_H_
-#define LBFGS_H_
+#ifndef __LBFGS_H__
+#define __LBFGS_H__
 
 #ifdef  __cplusplus
 extern "C" {
