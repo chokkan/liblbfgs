@@ -494,7 +494,8 @@ int lbfgs(
 
         /* Report the progress. */
         if (cd.proc_progress) {
-            if ((ret = cd.proc_progress(cd.instance, x, g, fx, xnorm, gnorm, step, cd.n, k, ls))) {
+            if (cd.proc_progress(cd.instance, x, g, fx, xnorm, gnorm, step, cd.n, k, ls)) {
+                ret = LBFGSERR_CANCELED;
                 goto lbfgs_exit;
             }
         }
