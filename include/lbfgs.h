@@ -400,8 +400,9 @@ typedef lbfgsfloatval_t (*lbfgs_evaluate_t)(
  *  @param  n           The number of variables.
  *  @param  k           The iteration count.
  *  @param  ls          The number of evaluations called for this iteration.
- *  @retval int         Zero to continue the optimization process. Returning a
- *                      non-zero value will cancel the optimization process.
+ *  @retval int         Zero (#LBFGS_SUCCESS) to continue the optimization process.
+ *                      Returning a non-zero value will cancel the optimization
+ *                      process and lbfgs() returns the value as its return value.
  */
 typedef int (*lbfgs_progress_t)(
     void *instance,
